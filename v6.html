@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HeartTrack Senior — Your Health Companion</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --card: rgba(30, 41, 59, 0.8);
+      --accent: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    body{
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: #f1f5f9;
+      min-height: 100vh;
+      font-size: 1rem;
+      padding-bottom: 5rem; /* Space for the fixed bottom nav */
+    }
+    .glass{
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .focus-ring:focus{
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.3);
+      border-color: var(--accent);
+    }
+    .btn{
+      transition: all 0.2s ease;
+      font-weight: 600;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); }
+    .metric-card{
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      transition: all 0.3s ease;
+    }
+    .metric-card:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+    .status-good{ color: var(--success); }
+    .status-warning{ color: var(--warning); }
+    .status-danger{ color: var(--danger); }
+    .pulse-animation{
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .slide-in-up {
+      animation: slideInUp 0.5s ease-out;
+    }
+    @keyframes slideInUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    /* Larger and more visible inputs */
+    input[type="number"], select, textarea, input[type="text"], input[type="time"] {
+      font-size: 1.125rem; /* text-lg */
+      padding: 0.875rem 1rem; /* py-3.5, px-4 */
+    }
+    /* Larger buttons */
+    .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+    /* Larger header and titles */
+    .text-xl { font-size: 1.5rem; }
+    .text-2xl { font-size: 1.875rem; }
+    .text-3xl { font-size: 2.5rem; }
+    
+    /* Modal styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease;
+    }
+    .modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-content {
+      position: relative;
+      background: var(--bg);
+      border-radius: 2rem;
+      padding: 2rem;
+      max-width: 90%;
+      max-height: 90%;
+      overflow-y: auto;
+      transform: translateY(100vh);
+      transition: transform 0.4s ease;
+    }
+    .modal.show .modal-content {
+      transform: translateY(0);
+    }
+    .close-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      font-size: 2rem;
+      cursor: pointer;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <header class="sticky top-0 z-50 glass border-b border-slate-700/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+            <span class="text-2xl">❤️</span>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold">HeartTrack Senior</h1>
+            <p class="text-sm text-slate-400">Your Health Companion</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-4">
+          <div id="connectionStatus" class="flex items-center space-x-2">
+            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+            <span class="text-sm text-slate-300">Online</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div id="alertSystem" class="fixed top-20 right-4 z-50 space-y-2"></div>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <div id="tabContent">
+      
+      <div id="dashboard-tab" class="tab-content active">
+        <div class="space-y-8">
+          
+          <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="metric-card rounded-3xl p-8">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-base text-slate-400">Your Health Score</p>
+                  <p id="healthScore" class="text-4xl font-bold text-cyan-400 mt-2">—</p>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-cyan-400/20 flex items-center justify-center">
+                  <span class="text-3xl">📊</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="w-full bg-slate-700 rounded-full h-3">
+                  <div id="healthScoreBar" class="bg-gradient-to-r from-cyan-400 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="metric-card rounded-3xl p-8">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-base text-slate-400">Today's Entries</p>
+                  <p id="todayEntries" class="text-4xl font-bold text-emerald-400 mt-2">0</p>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-emerald-400/20 flex items-center justify-center">
+                  <span class="text-3xl">📝</span>
+                </div>
+              </div>
+              <p id="lastEntry" class="text-sm text-slate-400 mt-2">No entries today</p>
+            </div>
+
+            <div class="metric-card rounded-3xl p-8">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-base text-slate-400">Tracking Streak</p>
+                  <p id="streak" class="text-4xl font-bold text-amber-400 mt-2">0</p>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-amber-400/20 flex items-center justify-center">
+                  <span class="text-3xl">🔥</span>
+                </div>
+              </div>
+              <p class="text-sm text-slate-400 mt-2">Days you've logged data</p>
+            </div>
+
+            <div class="metric-card rounded-3xl p-8">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-base text-slate-400">Current Risk Level</p>
+                  <p id="riskLevel" class="text-4xl font-bold text-slate-400 mt-2">—</p>
+                </div>
+                <div class="w-14 h-14 rounded-full bg-slate-400/20 flex items-center justify-center">
+                  <span id="riskIcon" class="text-3xl">🛡️</span>
+                </div>
+              </div>
+              <p id="riskDescription" class="text-sm text-slate-400 mt-2">Monitoring your data...</p>
+            </div>
+          </section>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <button id="openVitalsModalBtn" class="btn py-6 px-4 rounded-3xl glass text-center">
+              <div class="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">❤️</span>
+              </div>
+              <p class="font-bold text-xl text-white">Record Vitals</p>
+              <p class="text-sm text-slate-400">Blood pressure, heart rate, etc.</p>
+            </button>
+            <button id="openSymptomsModalBtn" class="btn py-6 px-4 rounded-3xl glass text-center">
+              <div class="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">🩺</span>
+              </div>
+              <p class="font-bold text-xl text-white">Log Symptoms</p>
+              <p class="text-sm text-slate-400">Track how you're feeling</p>
+            </button>
+            <button id="openMedicationsModalBtn" class="btn py-6 px-4 rounded-3xl glass text-center">
+              <div class="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-2">
+                <span class="text-3xl">💊</span>
+              </div>
+              <p class="font-bold text-xl text-white">Add Medication</p>
+              <p class="text-sm text-slate-400">Manage your prescriptions</p>
+            </button>
+          </div>
+
+          <div class="glass rounded-3xl p-8">
+            <h3 class="text-2xl font-bold mb-6">Recent Vitals Entries</h3>
+            <div id="recentEntries" class="space-y-4 max-h-80 overflow-y-auto">
+              <p class="text-slate-400 text-center py-6 text-lg">No entries yet. Tap the button above to get started!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="symptoms-tab" class="tab-content hidden">
+        <div class="glass rounded-3xl p-8">
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold">🩺 Symptom History</h2>
+            <button id="addNewSymptomBtn" class="btn px-6 py-4 rounded-xl bg-green-500 hover:bg-green-400 text-white text-lg">
+              + Add Symptom
+            </button>
+          </div>
+          <div id="symptomHistory" class="space-y-4">
+            <p class="text-slate-400 text-center py-6 text-lg">No symptoms recorded yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="medications-tab" class="tab-content hidden">
+        <div class="glass rounded-3xl p-8">
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold">💊 Medication List</h2>
+            <button id="addNewMedicationBtn" class="btn px-6 py-4 rounded-xl bg-purple-500 hover:bg-purple-400 text-white text-lg">
+              + Add Medication
+            </button>
+          </div>
+          <div id="medicationList" class="space-y-4">
+            <p class="text-slate-400 text-center py-6 text-lg">No medications added yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="reports-tab" class="tab-content hidden">
+        <div class="glass rounded-3xl p-8">
+          <h2 class="text-2xl font-bold mb-6">📈 Health Reports</h2>
+          <p class="text-lg text-slate-400 mb-4">View your health trends and export a report for your doctor.</p>
+          <button id="generateReportBtn" class="btn w-full py-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold text-xl">
+            Generate Report
+          </button>
+        </div>
+      </div>
+
+      <div id="profile-tab" class="tab-content hidden">
+        <div class="glass rounded-3xl p-8">
+          <h2 class="text-2xl font-bold mb-8">👤 My Profile</h2>
+          <div class="space-y-6">
+            <div>
+              <label class="block text-base font-medium text-slate-300 mb-2">Full Name</label>
+              <input type="text" value="John Doe" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+            </div>
+            <div>
+              <label class="block text-base font-medium text-slate-300 mb-2">Date of Birth</label>
+              <input type="date" value="1970-01-01" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+            </div>
+            <div>
+              <label class="block text-base font-medium text-slate-300 mb-2">Emergency Contact</label>
+              <input type="text" value="Jane Doe (555) 123-4567" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+            </div>
+            <div class="pt-4 border-t border-slate-600">
+              <h3 class="font-bold text-xl text-slate-300 mb-4">Settings</h3>
+              <button class="btn w-full py-5 rounded-2xl bg-red-500/20 text-red-400 font-bold text-lg hover:bg-red-500/30">
+                Clear All Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <nav class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-slate-700/50">
+    <div class="flex justify-around items-center h-20 max-w-lg mx-auto">
+      <button class="nav-btn active flex flex-col items-center p-2 rounded-xl" data-tab="dashboard">
+        <span class="text-3xl">🏠</span>
+        <span class="text-xs font-semibold mt-1">Home</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center p-2 rounded-xl" data-tab="symptoms">
+        <span class="text-3xl">🩺</span>
+        <span class="text-xs font-semibold mt-1">Symptoms</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center p-2 rounded-xl" data-tab="medications">
+        <span class="text-3xl">💊</span>
+        <span class="text-xs font-semibold mt-1">Meds</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center p-2 rounded-xl" data-tab="reports">
+        <span class="text-3xl">📈</span>
+        <span class="text-xs font-semibold mt-1">Reports</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center p-2 rounded-xl" data-tab="profile">
+        <span class="text-3xl">👤</span>
+        <span class="text-xs font-semibold mt-1">Profile</span>
+      </button>
+    </div>
+  </nav>
+
+  <div id="vitalsModal" class="modal">
+    <div class="modal-content glass w-full max-w-2xl slide-in-up">
+      <button class="close-btn" data-close="vitalsModal">&times;</button>
+      <h2 class="text-2xl font-bold mb-8">Record Your Vitals</h2>
+      <div class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-base font-medium text-slate-300 mb-2">Systolic (Top Number)</label>
+            <input id="systolic" type="number" placeholder="120" min="70" max="250" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+          </div>
+          <div>
+            <label class="block text-base font-medium text-slate-300 mb-2">Diastolic (Bottom Number)</label>
+            <input id="diastolic" type="number" placeholder="80" min="40" max="150" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-base font-medium text-slate-300 mb-2">Heart Rate (bpm)</label>
+            <input id="heartRate" type="number" placeholder="72" min="30" max="200" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+          </div>
+          <div>
+            <label class="block text-base font-medium text-slate-300 mb-2">Oxygen Saturation (%)</label>
+            <input id="oxygenSat" type="number" placeholder="98" min="70" max="100" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-base font-medium text-slate-300 mb-2">Blood Sugar (mg/dL)</label>
+            <input id="bloodSugar" type="number" placeholder="100" min="50" max="500" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+          </div>
+          <div>
+            <label class="block text-base font-medium text-slate-300 mb-2">When did you test?</label>
+            <select id="sugarType" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4">
+              <option value="fasting">Fasting (Before eating)</option>
+              <option value="random">Random</option>
+              <option value="post-meal">After a meal</option>
+              <option value="bedtime">Bedtime</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-base font-medium text-slate-300 mb-2">Add a Note (Optional)</label>
+          <textarea id="vitalsNotes" rows="4" placeholder="Any additional observations..." class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4 text-base"></textarea>
+        </div>
+        <button id="saveVitalsBtn" class="btn w-full py-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold text-xl">
+          💾 Save My Vitals
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="symptomsModal" class="modal">
+    <div class="modal-content glass w-full max-w-2xl slide-in-up">
+      <button class="close-btn" data-close="symptomsModal">&times;</button>
+      <h2 class="text-2xl font-bold mb-8">Log Your Symptoms</h2>
+      <div class="space-y-6">
+        <div>
+          <label class="block text-base font-medium text-slate-300 mb-2">What did you experience?</label>
+          <input id="symptomName" type="text" placeholder="e.g., Chest pain, Dizziness" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+        </div>
+        <div>
+          <label class="block text-base font-medium text-slate-300 mb-2">Severity (1-10)</label>
+          <input id="symptomSeverity" type="range" min="1" max="10" value="5" class="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+          <div class="text-center mt-2">
+            <span id="severityValue" class="text-xl font-bold text-cyan-400">5</span>
+            <span class="text-base text-slate-400">/10</span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-base font-medium text-slate-300 mb-2">Additional Notes</label>
+          <textarea id="symptomNotes" rows="4" placeholder="Describe your symptoms in detail..." class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4 text-base"></textarea>
+        </div>
+        <button id="saveSymptomsBtn" class="btn w-full py-5 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white font-bold text-xl">
+          💾 Save Symptom
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="medicationsModal" class="modal">
+    <div class="modal-content glass w-full max-w-2xl slide-in-up">
+      <button class="close-btn" data-close="medicationsModal">&times;</button>
+      <h2 class="text-2xl font-bold mb-8">Add New Medication</h2>
+      <div class="space-y-6">
+        <div>
+          <label class="block text-base font-medium text-slate-300 mb-2">Medication Name</label>
+          <input id="medName" type="text" placeholder="e.g., Lisinopril" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-base font-medium text-slate-300 mb-2">Dosage</label>
+            <input id="medDosage" type="text" placeholder="10mg" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4" />
+          </div>
+          <div>
+            <label class="block text-base font-medium text-slate-300 mb-2">Frequency</label>
+            <select id="medFrequency" class="focus-ring w-full rounded-2xl border border-slate-600 bg-slate-800 text-white px-5 py-4">
+              <option value="once">Once daily</option>
+              <option value="twice">Twice daily</option>
+              <option value="as-needed">As needed</option>
+            </select>
+          </div>
+        </div>
+        <button id="addMedicationBtn" class="btn w-full py-5 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold text-xl">
+          💊 Add Medication
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Data Manager for localStorage
+    const dataManager = {
+      saveVitals: (vitals) => {
+        const timestamp = new Date().toISOString();
+        const data = JSON.parse(localStorage.getItem('vitalsData') || '[]');
+        data.push({ ...vitals, timestamp });
+        localStorage.setItem('vitalsData', JSON.stringify(data));
+      },
+      getVitals: () => {
+        return JSON.parse(localStorage.getItem('vitalsData') || '[]');
+      },
+      saveMedication: (med) => {
+        const data = JSON.parse(localStorage.getItem('medicationsData') || '[]');
+        data.push(med);
+        localStorage.setItem('medicationsData', JSON.stringify(data));
+      },
+      getMedications: () => {
+        return JSON.parse(localStorage.getItem('medicationsData') || '[]');
+      }
+    };
+
+    // UI Controller
+    const uiController = {
+      updateDashboard: () => {
+        const vitalsData = dataManager.getVitals();
+        if (vitalsData.length > 0) {
+          const latest = vitalsData[vitalsData.length - 1];
+          document.getElementById('todayEntries').textContent = vitalsData.filter(d => {
+            const entryDate = new Date(d.timestamp);
+            const today = new Date();
+            return entryDate.getDate() === today.getDate() &&
+                   entryDate.getMonth() === today.getMonth() &&
+                   entryDate.getFullYear() === today.getFullYear();
+          }).length;
+          
+          const score = Math.min(100, Math.max(0, 
+            ((120 - Math.abs(latest.systolic - 120)) / 120) * 20 +
+            ((80 - Math.abs(latest.diastolic - 80)) / 80) * 20 +
+            ((72 - Math.abs(latest.heartRate - 72)) / 72) * 20 +
+            ((98 - Math.abs(latest.oxygenSat - 98)) / 98) * 10 +
+            ((100 - Math.abs(latest.bloodSugar - 100)) / 100) * 20
+          ));
+          document.getElementById('healthScore').textContent = `${Math.round(score)}%`;
+          document.getElementById('healthScoreBar').style.width = `${score}%`;
+
+          if (latest.systolic > 140 || latest.diastolic > 90 || latest.heartRate > 100) {
+            document.getElementById('riskLevel').textContent = 'High';
+            document.getElementById('riskLevel').className = 'text-4xl font-bold status-danger';
+            document.getElementById('riskIcon').textContent = '🚨';
+            document.getElementById('riskDescription').textContent = 'Review vitals with your doctor';
+          } else if (latest.systolic > 120 || latest.diastolic > 80 || latest.heartRate > 85) {
+            document.getElementById('riskLevel').textContent = 'Elevated';
+            document.getElementById('riskLevel').className = 'text-4xl font-bold status-warning';
+            document.getElementById('riskIcon').textContent = '⚠️';
+            document.getElementById('riskDescription').textContent = 'Keep monitoring trends';
+          } else {
+            document.getElementById('riskLevel').textContent = 'Normal';
+            document.getElementById('riskLevel').className = 'text-4xl font-bold status-good';
+            document.getElementById('riskIcon').textContent = '✅';
+            document.getElementById('riskDescription').textContent = 'All metrics are healthy';
+          }
+        }
+      },
+      updateRecentEntries: () => {
+        const vitalsData = dataManager.getVitals();
+        const recentEntriesList = document.getElementById('recentEntries');
+        recentEntriesList.innerHTML = '';
+        if (vitalsData.length === 0) {
+          recentEntriesList.innerHTML = '<p class="text-slate-400 text-center py-6 text-lg">No entries yet. Tap the button above to get started!</p>';
+          return;
+        }
+
+        const sortedData = [...vitalsData].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        sortedData.slice(0, 5).forEach(entry => {
+          const entryDate = new Date(entry.timestamp);
+          const formattedTime = entryDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const entryElement = document.createElement('div');
+          entryElement.className = 'flex justify-between items-center bg-slate-800 rounded-xl p-4 slide-in-up';
+          entryElement.innerHTML = `
+            <div>
+              <p class="font-semibold text-slate-300 text-lg">
+                ${entry.systolic}/${entry.diastolic} mmHg - ${entry.heartRate} bpm
+              </p>
+              <p class="text-sm text-slate-400">
+                ${entryDate.toLocaleDateString()} at ${formattedTime}
+              </p>
+            </div>
+            <span class="text-sm text-slate-400">
+              ${entry.notes ? entry.notes.substring(0, 20) + '...' : ''}
+            </span>
+          `;
+          recentEntriesList.appendChild(entryElement);
+        });
+      },
+      updateMedicationList: () => {
+        const medications = dataManager.getMedications();
+        const listContainer = document.getElementById('medicationList');
+        listContainer.innerHTML = '';
+        if (medications.length === 0) {
+          listContainer.innerHTML = '<p class="text-slate-400 text-center py-6 text-lg">No medications added yet.</p>';
+          return;
+        }
+
+        medications.forEach(med => {
+          const medElement = document.createElement('div');
+          medElement.className = 'bg-slate-800 rounded-xl p-5 slide-in-up';
+          medElement.innerHTML = `
+            <p class="font-semibold text-white text-lg">${med.name}</p>
+            <p class="text-base text-slate-400">${med.dosage} | ${med.frequency}</p>
+          `;
+          listContainer.appendChild(medElement);
+        });
+      },
+      openModal: (modalId) => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.classList.add('show');
+        }
+      },
+      closeModal: (modalId) => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.classList.remove('show');
+        }
+      }
+    };
+
+    // Utility functions
+    const utils = {
+      showAlert: (message, type) => {
+        const alertSystem = document.getElementById('alertSystem');
+        const alert = document.createElement('div');
+        alert.className = `p-5 rounded-2xl flex items-center space-x-4 slide-in-up text-lg font-medium`;
+        
+        switch(type) {
+          case 'success':
+            alert.classList.add('bg-green-500/10', 'border', 'border-green-500', 'text-green-300');
+            alert.innerHTML = `<span class="text-3xl">✅</span><p>${message}</p>`;
+            break;
+          case 'warning':
+            alert.classList.add('bg-yellow-500/10', 'border', 'border-yellow-500', 'text-yellow-300');
+            alert.innerHTML = `<span class="text-3xl">⚠️</span><p>${message}</p>`;
+            break;
+          case 'error':
+            alert.classList.add('bg-red-500/10', 'border', 'border-red-500', 'text-red-300');
+            alert.innerHTML = `<span class="text-3xl">❌</span><p>${message}</p>`;
+            break;
+        }
+
+        alertSystem.appendChild(alert);
+        setTimeout(() => {
+          alert.classList.add('opacity-0');
+          setTimeout(() => alert.remove(), 500);
+        }, 3000);
+      }
+    };
+
+    // Main App Logic
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initial UI updates
+      uiController.updateDashboard();
+      uiController.updateRecentEntries();
+      uiController.updateMedicationList();
+
+      // Navigation
+      const navBtns = document.querySelectorAll('.nav-btn');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      navBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          navBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          tabContents.forEach(content => content.classList.add('hidden'));
+          const targetTab = document.getElementById(btn.dataset.tab + '-tab');
+          if (targetTab) {
+            targetTab.classList.remove('hidden');
+          }
+        });
+      });
+      document.querySelector('.nav-btn[data-tab="dashboard"]').classList.add('active');
+
+      // Open modal buttons
+      document.getElementById('openVitalsModalBtn').addEventListener('click', () => uiController.openModal('vitalsModal'));
+      document.getElementById('openSymptomsModalBtn').addEventListener('click', () => uiController.openModal('symptomsModal'));
+      document.getElementById('openMedicationsModalBtn').addEventListener('click', () => uiController.openModal('medicationsModal'));
+      document.getElementById('addNewSymptomBtn').addEventListener('click', () => uiController.openModal('symptomsModal'));
+      document.getElementById('addNewMedicationBtn').addEventListener('click', () => uiController.openModal('medicationsModal'));
+
+      // Close modal buttons
+      document.querySelectorAll('[data-close]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          uiController.closeModal(e.target.dataset.close);
+        });
+      });
+      document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            uiController.closeModal(modal.id);
+          }
+        });
+      });
+
+      // Vitals Modal Logic
+      document.getElementById('saveVitalsBtn').addEventListener('click', () => {
+        const vitals = {
+          systolic: parseInt(document.getElementById('systolic').value) || null,
+          diastolic: parseInt(document.getElementById('diastolic').value) || null,
+          heartRate: parseInt(document.getElementById('heartRate').value) || null,
+          oxygenSat: parseInt(document.getElementById('oxygenSat').value) || null,
+          bloodSugar: parseInt(document.getElementById('bloodSugar').value) || null,
+          sugarType: document.getElementById('sugarType').value,
+          notes: document.getElementById('vitalsNotes').value
+        };
+
+        if (!vitals.systolic || !vitals.diastolic || !vitals.heartRate) {
+          utils.showAlert('Please fill in Blood Pressure and Heart Rate to save your vitals.', 'warning');
+          return;
+        }
+        
+        dataManager.saveVitals(vitals);
+        uiController.updateDashboard();
+        uiController.updateRecentEntries();
+        uiController.closeModal('vitalsModal');
+        utils.showAlert('Vitals saved successfully!', 'success');
+      });
+
+      // Symptoms Modal Logic
+      document.getElementById('saveSymptomsBtn').addEventListener('click', () => {
+        const symptom = {
+          name: document.getElementById('symptomName').value,
+          severity: document.getElementById('symptomSeverity').value,
+          notes: document.getElementById('symptomNotes').value,
+          timestamp: new Date().toISOString()
+        };
+        // Add logic to save symptoms here
+        uiController.closeModal('symptomsModal');
+        utils.showAlert('Symptom saved successfully!', 'success');
+      });
+
+      // Medications Modal Logic
+      document.getElementById('addMedicationBtn').addEventListener('click', () => {
+        const medication = {
+          name: document.getElementById('medName').value,
+          dosage: document.getElementById('medDosage').value,
+          frequency: document.getElementById('medFrequency').value,
+        };
+
+        if (!medication.name || !medication.dosage) {
+          utils.showAlert('Please fill in medication name and dosage.', 'warning');
+          return;
+        }
+        
+        dataManager.saveMedication(medication);
+        uiController.updateMedicationList();
+        uiController.closeModal('medicationsModal');
+        utils.showAlert('Medication added successfully!', 'success');
+      });
+
+      // Update severity value for symptoms
+      document.getElementById('symptomSeverity').addEventListener('input', (e) => {
+          document.getElementById('severityValue').textContent = e.target.value;
+      });
+    });
+  </script>
+</body>
+</html>

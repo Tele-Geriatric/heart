@@ -1,0 +1,1813 @@
+﻿Dear Dr. Irma,
+Thanks, but I need to see the code from the website (Canva.com). Open your project/mobile app, there is a slide/click button on the top left corner “show code”, when you slide it, it will show the code. Something similar to [<Doc type=”document”><html><body><head>...] Then copy it and paste it here.
+==============================================================
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HeartTrack Senior v7 — Complete Health Companion</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --card: rgba(30, 41, 59, 0.8);
+      --accent: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    body{
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+    .glass{
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    .focus-ring:focus{
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.3);
+      border-color: var(--accent);
+    }
+    .btn{
+      transition: all 0.2s ease;
+      font-weight: 600;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0); }
+    .metric-card{
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      transition: all 0.3s ease;
+    }
+    .metric-card:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+    .status-good{ color: var(--success); }
+    .status-warning{ color: var(--warning); }
+    .status-danger{ color: var(--danger); }
+    .pulse-animation{
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .slide-in{
+      animation: slideIn 0.5s ease-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header with Status -->
+  <header class="sticky top-0 z-50 glass border-b border-slate-700/50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+              <span class="text-xl">❤️</span>
+            </div>
+            <div>
+              <h1 class="text-xl font-bold">HeartTrack Senior v7</h1>
+              <p class="text-xs text-slate-400">Complete Health Companion</p>
+            </div>
+          </div>
+        </div>
+       
+        <div class="flex items-center space-x-4">
+          <div id="connectionStatus" class="flex items-center space-x-2">
+            <div class="w-2 h-2 rounded-full bg-green-400"></div>
+            <span class="text-sm text-slate-300">Online</span>
+          </div>
+          <div class="text-sm text-slate-400" id="currentDateTime"></div>
+          <button id="settingsBtn" class="btn p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white">
+            ⚙️
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- Alert System -->
+  <div id="alertSystem" class="fixed top-20 right-4 z-50 space-y-2"></div>
+
+
+  <!-- Main Dashboard -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+   
+    <!-- Quick Stats Overview -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="metric-card rounded-2xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-slate-400">Health Score</p>
+            <p id="healthScore" class="text-3xl font-bold text-cyan-400">—</p>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-cyan-400/20 flex items-center justify-center">
+            <span class="text-2xl">📊</span>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div class="w-full bg-slate-700 rounded-full h-2">
+            <div id="healthScoreBar" class="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="metric-card rounded-2xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-slate-400">Today's Entries</p>
+            <p id="todayEntries" class="text-3xl font-bold text-emerald-400">0</p>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-emerald-400/20 flex items-center justify-center">
+            <span class="text-2xl">📝</span>
+          </div>
+        </div>
+        <p id="lastEntry" class="text-xs text-slate-400 mt-2">No entries today</p>
+      </div>
+
+
+      <div class="metric-card rounded-2xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-slate-400">Streak</p>
+            <p id="streak" class="text-3xl font-bold text-amber-400">0</p>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-amber-400/20 flex items-center justify-center">
+            <span class="text-2xl">🔥</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-2">Days tracking</p>
+      </div>
+
+
+      <div class="metric-card rounded-2xl p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-slate-400">Risk Level</p>
+            <p id="riskLevel" class="text-3xl font-bold text-slate-400">—</p>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-slate-400/20 flex items-center justify-center">
+            <span id="riskIcon" class="text-2xl">🛡️</span>
+          </div>
+        </div>
+        <p id="riskDescription" class="text-xs text-slate-400 mt-2">Monitoring...</p>
+      </div>
+    </section>
+
+
+    <!-- Navigation Tabs -->
+    <nav class="mb-8">
+      <div class="glass rounded-2xl p-2">
+        <div class="flex space-x-1" id="tabNavigation">
+          <button class="tab-btn active px-6 py-3 rounded-xl font-medium transition-all" data-tab="vitals">
+            📊 Vitals
+          </button>
+          <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" data-tab="symptoms">
+            🩺 Symptoms
+          </button>
+          <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" data-tab="medications">
+            💊 Medications
+          </button>
+          <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" data-tab="lifestyle">
+            🥗 Lifestyle
+          </button>
+          <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" data-tab="reports">
+            📈 Reports
+          </button>
+          <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" data-tab="emergency">
+            🚨 Emergency
+          </button>
+        </div>
+      </div>
+    </nav>
+
+
+    <!-- Tab Content -->
+    <div id="tabContent">
+     
+      <!-- Vitals Tab -->
+      <div id="vitals-tab" class="tab-content active">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         
+          <!-- Vital Signs Input -->
+          <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-2xl font-bold">Record Vitals</h2>
+              <div class="flex items-center space-x-2">
+                <span id="vitalsStatus" class="px-3 py-1 rounded-full text-xs bg-slate-700 text-slate-300">Ready</span>
+                <button id="autoFillBtn" class="btn px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-400 text-white text-xs">
+                  Auto-fill Demo
+                </button>
+              </div>
+            </div>
+
+
+            <div class="space-y-4">
+              <!-- Blood Pressure -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Systolic BP</label>
+                  <input id="systolic" type="number" placeholder="120" min="70" max="250"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Diastolic BP</label>
+                  <input id="diastolic" type="number" placeholder="80" min="40" max="150"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+              </div>
+
+
+              <!-- Heart Rate & Oxygen -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Heart Rate (bpm)</label>
+                  <input id="heartRate" type="number" placeholder="72" min="30" max="200"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Oxygen Saturation (%)</label>
+                  <input id="oxygenSat" type="number" placeholder="98" min="70" max="100"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+              </div>
+
+
+              <!-- Weight & Temperature -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Weight (lbs)</label>
+                  <input id="weight" type="number" placeholder="150" min="50" max="500" step="0.1"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Temperature (°F)</label>
+                  <input id="temperature" type="number" placeholder="98.6" min="95" max="110" step="0.1"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+              </div>
+
+
+              <!-- Blood Sugar -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Blood Sugar (mg/dL)</label>
+                  <input id="bloodSugar" type="number" placeholder="100" min="50" max="500"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Test Type</label>
+                  <select id="sugarType" class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3">
+                    <option value="fasting">Fasting</option>
+                    <option value="random">Random</option>
+                    <option value="post-meal">After Meal</option>
+                    <option value="bedtime">Bedtime</option>
+                  </select>
+                </div>
+              </div>
+
+
+              <!-- Notes -->
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Notes (Optional)</label>
+                <textarea id="vitalsNotes" rows="3" placeholder="Any additional observations..."
+                  class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3"></textarea>
+              </div>
+
+
+              <!-- Save Button -->
+              <button id="saveVitalsBtn" class="btn w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold text-lg">
+                💾 Save Vitals
+              </button>
+            </div>
+          </div>
+
+
+          <!-- Recent Vitals & Trends -->
+          <div class="space-y-6">
+            <!-- Today's Summary -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">Today's Summary</h3>
+              <div id="todaySummary" class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Blood Pressure:</span>
+                  <span id="todayBP" class="font-medium">—</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Heart Rate:</span>
+                  <span id="todayHR" class="font-medium">—</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Weight:</span>
+                  <span id="todayWeight" class="font-medium">—</span>
+                </div>
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">Blood Sugar:</span>
+                  <span id="todayBS" class="font-medium">—</span>
+                </div>
+              </div>
+            </div>
+
+
+            <!-- Quick Trends -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">7-Day Trends</h3>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">Weight Change:</span>
+                  <div class="flex items-center space-x-2">
+                    <span id="weightTrend" class="font-medium">—</span>
+                    <span id="weightTrendIcon">📊</span>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">BP Average:</span>
+                  <div class="flex items-center space-x-2">
+                    <span id="bpTrend" class="font-medium">—</span>
+                    <span id="bpTrendIcon">📊</span>
+                  </div>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">HR Average:</span>
+                  <div class="flex items-center space-x-2">
+                    <span id="hrTrend" class="font-medium">—</span>
+                    <span id="hrTrendIcon">📊</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+            <!-- Recent Entries -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">Recent Entries</h3>
+              <div id="recentEntries" class="space-y-3 max-h-64 overflow-y-auto">
+                <p class="text-slate-400 text-center py-4">No entries yet</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Symptoms Tab -->
+      <div id="symptoms-tab" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         
+          <!-- Symptom Tracker -->
+          <div class="glass rounded-2xl p-6">
+            <h2 class="text-2xl font-bold mb-6">Daily Symptom Check</h2>
+           
+            <div class="space-y-4">
+              <div class="grid grid-cols-1 gap-3" id="symptomsList">
+                <!-- Symptoms will be populated by JavaScript -->
+              </div>
+             
+              <div class="mt-6">
+                <label class="block text-sm font-medium text-slate-300 mb-2">Severity Scale</label>
+                <div class="flex items-center space-x-4">
+                  <span class="text-sm text-slate-400">None</span>
+                  <input id="severityScale" type="range" min="0" max="10" value="0"
+                    class="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                  <span class="text-sm text-slate-400">Severe</span>
+                </div>
+                <div class="text-center mt-2">
+                  <span id="severityValue" class="text-lg font-bold text-cyan-400">0</span>
+                  <span class="text-sm text-slate-400">/10</span>
+                </div>
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Additional Notes</label>
+                <textarea id="symptomNotes" rows="3" placeholder="Describe your symptoms in detail..."
+                  class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3"></textarea>
+              </div>
+
+
+              <button id="saveSymptomsBtn" class="btn w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white font-bold text-lg">
+                💾 Save Symptoms
+              </button>
+            </div>
+          </div>
+
+
+          <!-- Symptom History & Patterns -->
+          <div class="space-y-6">
+            <!-- Today's Symptoms -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">Today's Symptoms</h3>
+              <div id="todaySymptoms" class="space-y-2">
+                <p class="text-slate-400 text-center py-4">No symptoms recorded today</p>
+              </div>
+            </div>
+
+
+            <!-- Symptom Patterns -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">Weekly Pattern</h3>
+              <div id="symptomPatterns" class="space-y-3">
+                <p class="text-slate-400 text-center py-4">Not enough data yet</p>
+              </div>
+            </div>
+
+
+            <!-- Emergency Symptoms Alert -->
+            <div class="glass rounded-2xl p-6 border-red-500/30">
+              <h3 class="text-xl font-bold mb-4 text-red-400">⚠️ Emergency Symptoms</h3>
+              <div class="space-y-2 text-sm">
+                <p class="text-slate-300">Call 911 immediately if you experience:</p>
+                <ul class="list-disc list-inside text-slate-400 space-y-1">
+                  <li>Severe chest pain or pressure</li>
+                  <li>Difficulty breathing at rest</li>
+                  <li>Sudden severe headache</li>
+                  <li>Loss of consciousness</li>
+                  <li>Severe dizziness or confusion</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Medications Tab -->
+      <div id="medications-tab" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         
+          <!-- Medication Manager -->
+          <div class="glass rounded-2xl p-6">
+            <h2 class="text-2xl font-bold mb-6">Medication Manager</h2>
+           
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Medication Name</label>
+                <input id="medName" type="text" placeholder="e.g., Lisinopril"
+                  class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+              </div>
+
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Dosage</label>
+                  <input id="medDosage" type="text" placeholder="10mg"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Frequency</label>
+                  <select id="medFrequency" class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3">
+                    <option value="once">Once daily</option>
+                    <option value="twice">Twice daily</option>
+                    <option value="three">Three times daily</option>
+                    <option value="four">Four times daily</option>
+                    <option value="as-needed">As needed</option>
+                  </select>
+                </div>
+              </div>
+
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Time 1</label>
+                  <input id="medTime1" type="time"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-slate-300 mb-2">Time 2 (if needed)</label>
+                  <input id="medTime2" type="time"
+                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                </div>
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Special Instructions</label>
+                <textarea id="medInstructions" rows="2" placeholder="Take with food, avoid alcohol, etc."
+                  class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3"></textarea>
+              </div>
+
+
+              <button id="addMedicationBtn" class="btn w-full py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold text-lg">
+                💊 Add Medication
+              </button>
+            </div>
+          </div>
+
+
+          <!-- Medication List & Reminders -->
+          <div class="space-y-6">
+            <!-- Current Medications -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">Current Medications</h3>
+              <div id="medicationsList" class="space-y-3">
+                <p class="text-slate-400 text-center py-4">No medications added yet</p>
+              </div>
+            </div>
+
+
+            <!-- Today's Schedule -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">Today's Schedule</h3>
+              <div id="todaySchedule" class="space-y-3">
+                <p class="text-slate-400 text-center py-4">No medications scheduled</p>
+              </div>
+            </div>
+
+
+            <!-- Medication Adherence -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">Adherence Tracking</h3>
+              <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                  <span class="text-slate-400">This Week:</span>
+                  <div class="flex items-center space-x-2">
+                    <div class="w-32 bg-slate-700 rounded-full h-2">
+                      <div id="adherenceBar" class="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <span id="adherencePercent" class="text-sm font-medium">0%</span>
+                  </div>
+                </div>
+                <div class="text-xs text-slate-400">
+                  <span id="adherenceStats">0 of 0 doses taken</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Lifestyle Tab -->
+      <div id="lifestyle-tab" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+         
+          <!-- Diet Tracking -->
+          <div class="glass rounded-2xl p-6">
+            <h3 class="text-xl font-bold mb-4">🥗 Diet & Nutrition</h3>
+           
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Sodium Intake (mg)</label>
+                <input id="sodiumIntake" type="number" placeholder="1500"
+                  class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Water Intake (oz)</label>
+                <div class="flex space-x-2">
+                  <input id="waterIntake" type="number" placeholder="64"
+                    class="focus-ring flex-1 rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                  <button id="addWaterBtn" class="btn px-4 py-3 rounded-xl bg-blue-500 hover:bg-blue-400 text-white">
+                    +8oz
+                  </button>
+                </div>
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Meals Today</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button class="meal-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-meal="breakfast">
+                    🌅 Breakfast
+                  </button>
+                  <button class="meal-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-meal="lunch">
+                    🌞 Lunch
+                  </button>
+                  <button class="meal-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-meal="dinner">
+                    🌙 Dinner
+                  </button>
+                  <button class="meal-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-meal="snack">
+                    🍎 Snack
+                  </button>
+                </div>
+              </div>
+
+
+              <div class="pt-4 border-t border-slate-600">
+                <div class="flex justify-between text-sm">
+                  <span class="text-slate-400">Daily Sodium Goal:</span>
+                  <span class="text-slate-300">2000mg</span>
+                </div>
+                <div class="w-full bg-slate-700 rounded-full h-2 mt-2">
+                  <div id="sodiumProgress" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Exercise & Activity -->
+          <div class="glass rounded-2xl p-6">
+            <h3 class="text-xl font-bold mb-4">🏃‍♂️ Activity & Exercise</h3>
+           
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Steps Today</label>
+                <input id="stepsToday" type="number" placeholder="5000"
+                  class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Exercise Duration (minutes)</label>
+                <input id="exerciseDuration" type="number" placeholder="30"
+                  class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Activity Type</label>
+                <select id="activityType" class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3">
+                  <option value="walking">Walking</option>
+                  <option value="swimming">Swimming</option>
+                  <option value="cycling">Cycling</option>
+                  <option value="yoga">Yoga</option>
+                  <option value="strength">Strength Training</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Energy Level (1-10)</label>
+                <input id="energyLevel" type="range" min="1" max="10" value="5"
+                  class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                  <span>Low</span>
+                  <span id="energyValue" class="text-cyan-400 font-medium">5</span>
+                  <span>High</span>
+                </div>
+              </div>
+
+
+              <button id="saveActivityBtn" class="btn w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-bold">
+                💾 Save Activity
+              </button>
+            </div>
+          </div>
+
+
+          <!-- Sleep & Mood -->
+          <div class="glass rounded-2xl p-6">
+            <h3 class="text-xl font-bold mb-4">😴 Sleep & Mood</h3>
+           
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Sleep Duration (hours)</label>
+                <input id="sleepDuration" type="number" placeholder="8" min="0" max="24" step="0.5"
+                  class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Sleep Quality</label>
+                <div class="grid grid-cols-3 gap-2">
+                  <button class="sleep-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-quality="poor">
+                    😴 Poor
+                  </button>
+                  <button class="sleep-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-quality="fair">
+                    😐 Fair
+                  </button>
+                  <button class="sleep-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-quality="good">
+                    😊 Good
+                  </button>
+                </div>
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Overall Mood</label>
+                <div class="grid grid-cols-5 gap-1">
+                  <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="1">😢</button>
+                  <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="2">😟</button>
+                  <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="3">😐</button>
+                  <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="4">😊</button>
+                  <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="5">😄</button>
+                </div>
+              </div>
+
+
+              <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Stress Level (1-10)</label>
+                <input id="stressLevel" type="range" min="1" max="10" value="5"
+                  class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                  <span>Calm</span>
+                  <span id="stressValue" class="text-cyan-400 font-medium">5</span>
+                  <span>Stressed</span>
+                </div>
+              </div>
+
+
+              <button id="saveMoodBtn" class="btn w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-bold">
+                💾 Save Mood & Sleep
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Reports Tab -->
+      <div id="reports-tab" class="tab-content hidden">
+        <div class="space-y-6">
+         
+          <!-- Report Controls -->
+          <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-2xl font-bold">📈 Health Reports</h2>
+              <div class="flex space-x-2">
+                <select id="reportPeriod" class="focus-ring rounded-lg border border-slate-600 bg-slate-800 text-white px-3 py-2">
+                  <option value="7">Last 7 days</option>
+                  <option value="30">Last 30 days</option>
+                  <option value="90">Last 90 days</option>
+                </select>
+                <button id="generateReportBtn" class="btn px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-white">
+                  Generate Report
+                </button>
+                <button id="exportReportBtn" class="btn px-4 py-2 rounded-lg bg-green-500 hover:bg-green-400 text-white">
+                  Export PDF
+                </button>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Health Metrics Overview -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="metric-card rounded-2xl p-6">
+              <h4 class="text-sm text-slate-400 mb-2">Average Blood Pressure</h4>
+              <p id="avgBP" class="text-2xl font-bold text-cyan-400">—</p>
+              <p id="bpStatus" class="text-xs text-slate-400 mt-1">—</p>
+            </div>
+           
+            <div class="metric-card rounded-2xl p-6">
+              <h4 class="text-sm text-slate-400 mb-2">Average Heart Rate</h4>
+              <p id="avgHR" class="text-2xl font-bold text-emerald-400">—</p>
+              <p id="hrStatus" class="text-xs text-slate-400 mt-1">—</p>
+            </div>
+           
+            <div class="metric-card rounded-2xl p-6">
+              <h4 class="text-sm text-slate-400 mb-2">Weight Change</h4>
+              <p id="weightChange" class="text-2xl font-bold text-amber-400">—</p>
+              <p id="weightStatus" class="text-xs text-slate-400 mt-1">—</p>
+            </div>
+           
+            <div class="metric-card rounded-2xl p-6">
+              <h4 class="text-sm text-slate-400 mb-2">Average Blood Sugar</h4>
+              <p id="avgBS" class="text-2xl font-bold text-purple-400">—</p>
+              <p id="bsStatus" class="text-xs text-slate-400 mt-1">—</p>
+            </div>
+          </div>
+
+
+          <!-- Detailed Analysis -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">Trend Analysis</h3>
+              <div id="trendAnalysis" class="space-y-4">
+                <p class="text-slate-400">Select a report period to view trends</p>
+              </div>
+            </div>
+
+
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">Health Insights</h3>
+              <div id="healthInsights" class="space-y-4">
+                <p class="text-slate-400">Insights will appear after generating a report</p>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Data Table -->
+          <div class="glass rounded-2xl p-6">
+            <h3 class="text-xl font-bold mb-4">Detailed Data</h3>
+            <div class="overflow-x-auto">
+              <table id="dataTable" class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-slate-600">
+                    <th class="text-left py-2 text-slate-400">Date</th>
+                    <th class="text-left py-2 text-slate-400">Blood Pressure</th>
+                    <th class="text-left py-2 text-slate-400">Heart Rate</th>
+                    <th class="text-left py-2 text-slate-400">Weight</th>
+                    <th class="text-left py-2 text-slate-400">Blood Sugar</th>
+                    <th class="text-left py-2 text-slate-400">Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                  <tr>
+                    <td colspan="6" class="text-center py-8 text-slate-400">No data available</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Emergency Tab -->
+      <div id="emergency-tab" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         
+          <!-- Emergency Contacts -->
+          <div class="glass rounded-2xl p-6">
+            <h2 class="text-2xl font-bold mb-6 text-red-400">🚨 Emergency Contacts</h2>
+           
+            <div class="space-y-4">
+              <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h3 class="font-bold text-red-400">Emergency Services</h3>
+                    <p class="text-slate-300">For life-threatening emergencies</p>
+                  </div>
+                  <button class="btn px-6 py-3 rounded-xl bg-red-500 hover:bg-red-400 text-white font-bold">
+                    📞 Call 911
+                  </button>
+                </div>
+              </div>
+
+
+              <div class="space-y-3">
+                <h4 class="font-semibold text-slate-300">Personal Emergency Contacts</h4>
+               
+                <div class="space-y-2" id="emergencyContactsList">
+                  <div class="bg-slate-800 rounded-lg p-3">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="font-medium">Primary Care Doctor</p>
+                        <p class="text-sm text-slate-400">Dr. Smith - (555) 123-4567</p>
+                      </div>
+                      <button class="btn px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-400 text-white text-sm">
+                        Call
+                      </button>
+                    </div>
+                  </div>
+                 
+                  <div class="bg-slate-800 rounded-lg p-3">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="font-medium">Cardiologist</p>
+                        <p class="text-sm text-slate-400">Dr. Johnson - (555) 987-6543</p>
+                      </div>
+                      <button class="btn px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-400 text-white text-sm">
+                        Call
+                      </button>
+                    </div>
+                  </div>
+                 
+                  <div class="bg-slate-800 rounded-lg p-3">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <p class="font-medium">Emergency Contact</p>
+                        <p class="text-sm text-slate-400">John Doe - (555) 456-7890</p>
+                      </div>
+                      <button class="btn px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-400 text-white text-sm">
+                        Call
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+
+                <button id="addContactBtn" class="btn w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white">
+                  + Add Emergency Contact
+                </button>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Emergency Symptoms & Actions -->
+          <div class="space-y-6">
+            <!-- Warning Signs -->
+            <div class="glass rounded-2xl p-6 border-red-500/30">
+              <h3 class="text-xl font-bold mb-4 text-red-400">⚠️ Warning Signs</h3>
+              <div class="space-y-3">
+                <div class="bg-red-500/10 rounded-lg p-3">
+                  <h4 class="font-semibold text-red-300">Call 911 Immediately:</h4>
+                  <ul class="text-sm text-slate-300 mt-2 space-y-1">
+                    <li>• Severe chest pain or pressure</li>
+                    <li>• Difficulty breathing at rest</li>
+                    <li>• Loss of consciousness</li>
+                    <li>• Severe dizziness or confusion</li>
+                    <li>• Sudden severe headache</li>
+                  </ul>
+                </div>
+               
+                <div class="bg-yellow-500/10 rounded-lg p-3">
+                  <h4 class="font-semibold text-yellow-300">Contact Doctor Soon:</h4>
+                  <ul class="text-sm text-slate-300 mt-2 space-y-1">
+                    <li>• Rapid weight gain (3+ lbs in 2 days)</li>
+                    <li>• Increased swelling in legs/feet</li>
+                    <li>• Persistent cough or wheezing</li>
+                    <li>• Unusual fatigue or weakness</li>
+                    <li>• Blood pressure consistently high</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+
+            <!-- Quick Actions -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">🚀 Quick Actions</h3>
+              <div class="grid grid-cols-1 gap-3">
+                <button class="btn p-4 rounded-xl bg-red-500 hover:bg-red-400 text-white text-left">
+                  <div class="font-bold">🚨 Emergency Alert</div>
+                  <div class="text-sm opacity-90">Send alert to emergency contacts</div>
+                </button>
+               
+                <button class="btn p-4 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-left">
+                  <div class="font-bold">📋 Share Health Summary</div>
+                  <div class="text-sm opacity-90">Generate emergency health report</div>
+                </button>
+               
+                <button class="btn p-4 rounded-xl bg-green-500 hover:bg-green-400 text-white text-left">
+                  <div class="font-bold">📍 Share Location</div>
+                  <div class="text-sm opacity-90">Send current location to contacts</div>
+                </button>
+              </div>
+            </div>
+
+
+            <!-- Medical Information -->
+            <div class="glass rounded-2xl p-6">
+              <h3 class="text-xl font-bold mb-4">🏥 Medical Information</h3>
+              <div class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Blood Type:</span>
+                  <span class="text-slate-300">O+</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Allergies:</span>
+                  <span class="text-slate-300">Penicillin</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Insurance:</span>
+                  <span class="text-slate-300">Medicare</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">Medical ID:</span>
+                  <span class="text-slate-300">123-45-6789</span>
+                </div>
+              </div>
+              <button class="btn w-full mt-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white">
+                Edit Medical Info
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="glass rounded-2xl p-6 w-full max-w-md">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-xl font-bold">⚙️ Settings</h2>
+          <button id="closeSettingsBtn" class="btn p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white">
+            ✕
+          </button>
+        </div>
+       
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Units</label>
+            <select id="unitsSelect" class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3">
+              <option value="imperial">Imperial (lbs, °F)</option>
+              <option value="metric">Metric (kg, °C)</option>
+            </select>
+          </div>
+         
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Notifications</label>
+            <div class="space-y-2">
+              <label class="flex items-center space-x-3">
+                <input type="checkbox" id="medicationReminders" class="rounded">
+                <span class="text-sm">Medication Reminders</span>
+              </label>
+              <label class="flex items-center space-x-3">
+                <input type="checkbox" id="vitalsReminders" class="rounded">
+                <span class="text-sm">Daily Vitals Reminder</span>
+              </label>
+            </div>
+          </div>
+         
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">Data Export</label>
+            <div class="space-y-2">
+              <button class="btn w-full py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-white">
+                Export All Data
+              </button>
+              <button class="btn w-full py-2 rounded-lg bg-red-500 hover:bg-red-400 text-white">
+                Clear All Data
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Instructions Section -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="glass rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold">📱 Use as Standalone App</h2>
+        <span class="px-3 py-1 rounded-full text-xs bg-cyan-500/20 text-cyan-300">Works offline</span>
+      </div>
+     
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-semibold text-lg mb-3">💾 Save to Your Device</h3>
+          <ol class="list-decimal list-inside space-y-2 text-sm text-slate-300">
+            <li>Copy all the code from this page</li>
+            <li>Save it as <code class="bg-slate-700 px-2 py-1 rounded text-cyan-300">hearttrack-v7.html</code> on your computer</li>
+            <li>Double-click the file to open in your web browser</li>
+            <li>Bookmark it for quick access</li>
+          </ol>
+        </div>
+       
+        <div>
+          <h3 class="font-semibold text-lg mb-3">📱 Add to Phone Home Screen</h3>
+          <div class="space-y-3">
+            <div>
+              <div class="font-medium text-cyan-300">iPhone/iPad:</div>
+              <div class="text-sm text-slate-300">Open in Safari → Share button → "Add to Home Screen"</div>
+            </div>
+            <div>
+              <div class="font-medium text-cyan-300">Android:</div>
+              <div class="text-sm text-slate-300">Open in Chrome → Menu (3 dots) → "Add to Home screen"</div>
+            </div>
+          </div>
+        </div>
+      </div>
+     
+      <div class="mt-6 rounded-2xl bg-slate-800/50 border border-slate-600/30 p-4">
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-2xl">✨</span>
+          <div class="font-semibold">Version 7 Features</div>
+        </div>
+        <ul class="list-disc list-inside text-sm text-slate-300 space-y-1">
+          <li><strong>Enhanced UI/UX</strong> — Modern design with smooth animations</li>
+          <li><strong>Comprehensive Tracking</strong> — Vitals, symptoms, medications, lifestyle</li>
+          <li><strong>Smart Analytics</strong> — Health scores, trends, and insights</li>
+          <li><strong>Emergency Features</strong> — Quick access to emergency contacts and actions</li>
+          <li><strong>Advanced Reports</strong> — Detailed health reports with export options</li>
+          <li><strong>Offline Capable</strong> — Works completely without internet</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+
+  <script>
+    // Storage keys
+    const STORAGE_KEYS = {
+      vitals: 'hearttrack_v7_vitals',
+      symptoms: 'hearttrack_v7_symptoms',
+      medications: 'hearttrack_v7_medications',
+      lifestyle: 'hearttrack_v7_lifestyle',
+      settings: 'hearttrack_v7_settings'
+    };
+
+
+    // Utility functions
+    const storage = {
+      get: (key, defaultValue = null) => {
+        try {
+          const item = localStorage.getItem(key);
+          return item ? JSON.parse(item) : defaultValue;
+        } catch {
+          return defaultValue;
+        }
+      },
+      set: (key, value) => {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (e) {
+          console.error('Storage error:', e);
+        }
+      }
+    };
+
+
+    const utils = {
+      formatDate: (date) => {
+        return new Date(date).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      },
+     
+      generateId: () => {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+      },
+     
+      showAlert: (message, type = 'info') => {
+        const alertSystem = document.getElementById('alertSystem');
+        const alert = document.createElement('div');
+        alert.className = `slide-in p-4 rounded-lg shadow-lg max-w-sm ${
+          type === 'success' ? 'bg-green-500' :
+          type === 'error' ? 'bg-red-500' :
+          type === 'warning' ? 'bg-yellow-500' :
+          'bg-blue-500'
+        } text-white`;
+        alert.textContent = message;
+       
+        alertSystem.appendChild(alert);
+       
+        setTimeout(() => {
+          alert.remove();
+        }, 5000);
+      }
+    };
+
+
+    // Data management
+    const dataManager = {
+      saveVitals: (data) => {
+        const vitals = storage.get(STORAGE_KEYS.vitals, []);
+        vitals.push({
+          id: utils.generateId(),
+          timestamp: Date.now(),
+          ...data
+        });
+        storage.set(STORAGE_KEYS.vitals, vitals);
+        return vitals;
+      },
+     
+      getVitals: (days = 30) => {
+        const vitals = storage.get(STORAGE_KEYS.vitals, []);
+        const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+        return vitals.filter(v => v.timestamp > cutoff);
+      },
+     
+      saveSymptoms: (data) => {
+        const symptoms = storage.get(STORAGE_KEYS.symptoms, []);
+        symptoms.push({
+          id: utils.generateId(),
+          timestamp: Date.now(),
+          ...data
+        });
+        storage.set(STORAGE_KEYS.symptoms, symptoms);
+        return symptoms;
+      },
+     
+      getSymptoms: (days = 30) => {
+        const symptoms = storage.get(STORAGE_KEYS.symptoms, []);
+        const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+        return symptoms.filter(s => s.timestamp > cutoff);
+      },
+     
+      saveMedication: (data) => {
+        const medications = storage.get(STORAGE_KEYS.medications, []);
+        medications.push({
+          id: utils.generateId(),
+          ...data
+        });
+        storage.set(STORAGE_KEYS.medications, medications);
+        return medications;
+      },
+     
+      getMedications: () => {
+        return storage.get(STORAGE_KEYS.medications, []);
+      },
+     
+      saveLifestyle: (data) => {
+        const lifestyle = storage.get(STORAGE_KEYS.lifestyle, []);
+        lifestyle.push({
+          id: utils.generateId(),
+          timestamp: Date.now(),
+          ...data
+        });
+        storage.set(STORAGE_KEYS.lifestyle, lifestyle);
+        return lifestyle;
+      },
+     
+      getLifestyle: (days = 30) => {
+        const lifestyle = storage.get(STORAGE_KEYS.lifestyle, []);
+        const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+        return lifestyle.filter(l => l.timestamp > cutoff);
+      }
+    };
+
+
+    // Health calculations
+    const healthCalculator = {
+      calculateHealthScore: () => {
+        const vitals = dataManager.getVitals(7);
+        if (vitals.length === 0) return 0;
+       
+        let score = 100;
+        const latest = vitals[vitals.length - 1];
+       
+        // Blood pressure scoring
+        if (latest.systolic && latest.diastolic) {
+          if (latest.systolic > 140 || latest.diastolic > 90) score -= 20;
+          else if (latest.systolic > 130 || latest.diastolic > 80) score -= 10;
+        }
+       
+        // Heart rate scoring
+        if (latest.heartRate) {
+          if (latest.heartRate > 100 || latest.heartRate < 60) score -= 15;
+          else if (latest.heartRate > 90 || latest.heartRate < 65) score -= 5;
+        }
+       
+        // Blood sugar scoring
+        if (latest.bloodSugar) {
+          if (latest.bloodSugar > 180) score -= 15;
+          else if (latest.bloodSugar > 140) score -= 8;
+        }
+       
+        // Consistency bonus
+        if (vitals.length >= 5) score += 10;
+       
+        return Math.max(0, Math.min(100, score));
+      },
+     
+      calculateRiskLevel: () => {
+        const vitals = dataManager.getVitals(7);
+        const symptoms = dataManager.getSymptoms(7);
+       
+        if (vitals.length === 0) return { level: 'Unknown', color: 'slate' };
+       
+        const latest = vitals[vitals.length - 1];
+        let riskFactors = 0;
+       
+        // Check vital signs
+        if (latest.systolic > 160 || latest.diastolic > 100) riskFactors += 3;
+        if (latest.heartRate > 110 || latest.heartRate < 50) riskFactors += 2;
+        if (latest.bloodSugar > 200) riskFactors += 2;
+       
+        // Check symptoms
+        const recentSymptoms = symptoms.filter(s => s.timestamp > Date.now() - 24 * 60 * 60 * 1000);
+        if (recentSymptoms.length > 0) {
+          const avgSeverity = recentSymptoms.reduce((sum, s) => sum + s.severity, 0) / recentSymptoms.length;
+          if (avgSeverity > 7) riskFactors += 3;
+          else if (avgSeverity > 5) riskFactors += 1;
+        }
+       
+        if (riskFactors >= 5) return { level: 'High', color: 'red', icon: '🚨' };
+        if (riskFactors >= 3) return { level: 'Medium', color: 'yellow', icon: '⚠️' };
+        if (riskFactors >= 1) return { level: 'Low', color: 'green', icon: '✅' };
+        return { level: 'Normal', color: 'green', icon: '🛡️' };
+      }
+    };
+
+
+    // UI Controllers
+    const uiController = {
+      updateDateTime: () => {
+        const now = new Date();
+        document.getElementById('currentDateTime').textContent =
+          now.toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+      },
+     
+      updateDashboard: () => {
+        // Health Score
+        const healthScore = healthCalculator.calculateHealthScore();
+        document.getElementById('healthScore').textContent = healthScore;
+        document.getElementById('healthScoreBar').style.width = `${healthScore}%`;
+       
+        // Today's entries
+        const today = new Date().toDateString();
+        const todayVitals = dataManager.getVitals(1).filter(v =>
+          new Date(v.timestamp).toDateString() === today
+        );
+        document.getElementById('todayEntries').textContent = todayVitals.length;
+       
+        if (todayVitals.length > 0) {
+          const latest = todayVitals[todayVitals.length - 1];
+          document.getElementById('lastEntry').textContent =
+            `Last: ${utils.formatDate(latest.timestamp)}`;
+        }
+       
+        // Streak calculation
+        const vitals = dataManager.getVitals(30);
+        let streak = 0;
+        let currentDate = new Date();
+       
+        while (streak < 30) {
+          const dateStr = currentDate.toDateString();
+          const hasEntry = vitals.some(v =>
+            new Date(v.timestamp).toDateString() === dateStr
+          );
+         
+          if (!hasEntry) break;
+          streak++;
+          currentDate.setDate(currentDate.getDate() - 1);
+        }
+       
+        document.getElementById('streak').textContent = streak;
+       
+        // Risk Level
+        const risk = healthCalculator.calculateRiskLevel();
+        document.getElementById('riskLevel').textContent = risk.level;
+        document.getElementById('riskLevel').className = `text-3xl font-bold status-${risk.color === 'red' ? 'danger' : risk.color === 'yellow' ? 'warning' : 'good'}`;
+        document.getElementById('riskIcon').textContent = risk.icon;
+        document.getElementById('riskDescription').textContent =
+          risk.level === 'High' ? 'Consult healthcare provider' :
+          risk.level === 'Medium' ? 'Monitor closely' :
+          risk.level === 'Low' ? 'Some concerns noted' :
+          'All systems normal';
+      },
+     
+      updateVitalsTab: () => {
+        // Today's summary
+        const today = new Date().toDateString();
+        const todayVitals = dataManager.getVitals(1).filter(v =>
+          new Date(v.timestamp).toDateString() === today
+        );
+       
+        if (todayVitals.length > 0) {
+          const latest = todayVitals[todayVitals.length - 1];
+          document.getElementById('todayBP').textContent =
+            latest.systolic && latest.diastolic ? `${latest.systolic}/${latest.diastolic}` : '—';
+          document.getElementById('todayHR').textContent =
+            latest.heartRate ? `${latest.heartRate} bpm` : '—';
+          document.getElementById('todayWeight').textContent =
+            latest.weight ? `${latest.weight} lbs` : '—';
+          document.getElementById('todayBS').textContent =
+            latest.bloodSugar ? `${latest.bloodSugar} mg/dL` : '—';
+        } else {
+          ['todayBP', 'todayHR', 'todayWeight', 'todayBS'].forEach(id => {
+            document.getElementById(id).textContent = '—';
+          });
+        }
+       
+        // 7-day trends
+        const weekVitals = dataManager.getVitals(7);
+        if (weekVitals.length >= 2) {
+          const first = weekVitals[0];
+          const latest = weekVitals[weekVitals.length - 1];
+         
+          // Weight trend
+          if (first.weight && latest.weight) {
+            const change = latest.weight - first.weight;
+            document.getElementById('weightTrend').textContent =
+              `${change > 0 ? '+' : ''}${change.toFixed(1)} lbs`;
+            document.getElementById('weightTrendIcon').textContent =
+              change > 2 ? '📈' : change < -2 ? '📉' : '➡️';
+          }
+         
+          // BP average
+          const bpReadings = weekVitals.filter(v => v.systolic && v.diastolic);
+          if (bpReadings.length > 0) {
+            const avgSys = Math.round(bpReadings.reduce((sum, v) => sum + v.systolic, 0) / bpReadings.length);
+            const avgDia = Math.round(bpReadings.reduce((sum, v) => sum + v.diastolic, 0) / bpReadings.length);
+            document.getElementById('bpTrend').textContent = `${avgSys}/${avgDia}`;
+            document.getElementById('bpTrendIcon').textContent =
+              avgSys > 140 || avgDia > 90 ? '⚠️' : '✅';
+          }
+         
+          // HR average
+          const hrReadings = weekVitals.filter(v => v.heartRate);
+          if (hrReadings.length > 0) {
+            const avgHR = Math.round(hrReadings.reduce((sum, v) => sum + v.heartRate, 0) / hrReadings.length);
+            document.getElementById('hrTrend').textContent = `${avgHR} bpm`;
+            document.getElementById('hrTrendIcon').textContent =
+              avgHR > 100 || avgHR < 60 ? '⚠️' : '✅';
+          }
+        }
+       
+        // Recent entries
+        const recentEntries = document.getElementById('recentEntries');
+        const vitals = dataManager.getVitals(7).slice(-5).reverse();
+       
+        if (vitals.length === 0) {
+          recentEntries.innerHTML = '<p class="text-slate-400 text-center py-4">No entries yet</p>';
+        } else {
+          recentEntries.innerHTML = vitals.map(v => `
+            <div class="bg-slate-800 rounded-lg p-3">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="text-sm text-slate-400">${utils.formatDate(v.timestamp)}</div>
+                  <div class="text-sm mt-1">
+                    ${v.systolic && v.diastolic ? `BP: ${v.systolic}/${v.diastolic}` : ''}
+                    ${v.heartRate ? ` • HR: ${v.heartRate}` : ''}
+                    ${v.weight ? ` • Weight: ${v.weight}` : ''}
+                  </div>
+                </div>
+                <button class="text-xs text-red-400 hover:text-red-300" onclick="deleteVital('${v.id}')">Delete</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      },
+     
+      switchTab: (tabName) => {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.remove('active', 'bg-cyan-500', 'text-white');
+          btn.classList.add('text-slate-400');
+        });
+       
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active', 'bg-cyan-500', 'text-white');
+        document.querySelector(`[data-tab="${tabName}"]`).classList.remove('text-slate-400');
+       
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.add('hidden');
+          content.classList.remove('active');
+        });
+       
+        const activeTab = document.getElementById(`${tabName}-tab`);
+        activeTab.classList.remove('hidden');
+        activeTab.classList.add('active');
+       
+        // Update specific tab content
+        if (tabName === 'vitals') {
+          uiController.updateVitalsTab();
+        } else if (tabName === 'symptoms') {
+          uiController.updateSymptomsTab();
+        } else if (tabName === 'medications') {
+          uiController.updateMedicationsTab();
+        } else if (tabName === 'lifestyle') {
+          uiController.updateLifestyleTab();
+        } else if (tabName === 'reports') {
+          uiController.updateReportsTab();
+        }
+      },
+     
+      updateSymptomsTab: () => {
+        // Populate symptoms list
+        const symptomsList = document.getElementById('symptomsList');
+        const commonSymptoms = [
+          'Chest pain or discomfort',
+          'Shortness of breath',
+          'Fatigue or weakness',
+          'Dizziness or lightheadedness',
+          'Rapid or irregular heartbeat',
+          'Swelling in legs, ankles, or feet',
+          'Persistent cough',
+          'Nausea or loss of appetite'
+        ];
+       
+        symptomsList.innerHTML = commonSymptoms.map(symptom => `
+          <label class="flex items-center space-x-3 p-3 bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-700">
+            <input type="checkbox" class="symptom-checkbox rounded" data-symptom="${symptom}">
+            <span class="text-sm">${symptom}</span>
+          </label>
+        `).join('');
+       
+        // Today's symptoms
+        const today = new Date().toDateString();
+        const todaySymptoms = dataManager.getSymptoms(1).filter(s =>
+          new Date(s.timestamp).toDateString() === today
+        );
+       
+        const todaySymptomsEl = document.getElementById('todaySymptoms');
+        if (todaySymptoms.length === 0) {
+          todaySymptomsEl.innerHTML = '<p class="text-slate-400 text-center py-4">No symptoms recorded today</p>';
+        } else {
+          todaySymptomsEl.innerHTML = todaySymptoms.map(s => `
+            <div class="bg-slate-800 rounded-lg p-3">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="text-sm font-medium">${s.symptoms.join(', ')}</div>
+                  <div class="text-xs text-slate-400">Severity: ${s.severity}/10</div>
+                  ${s.notes ? `<div class="text-xs text-slate-400 mt-1">${s.notes}</div>` : ''}
+                </div>
+                <div class="text-xs text-slate-400">${utils.formatDate(s.timestamp)}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+      },
+     
+      updateMedicationsTab: () => {
+        const medications = dataManager.getMedications();
+        const medicationsList = document.getElementById('medicationsList');
+       
+        if (medications.length === 0) {
+          medicationsList.innerHTML = '<p class="text-slate-400 text-center py-4">No medications added yet</p>';
+        } else {
+          medicationsList.innerHTML = medications.map(med => `
+            <div class="bg-slate-800 rounded-lg p-4">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="font-medium">${med.name}</div>
+                  <div class="text-sm text-slate-400">${med.dosage} • ${med.frequency}</div>
+                  <div class="text-xs text-slate-400">${med.time1}${med.time2 ? `, ${med.time2}` : ''}</div>
+                  ${med.instructions ? `<div class="text-xs text-slate-400 mt-1">${med.instructions}</div>` : ''}
+                </div>
+                <button class="text-xs text-red-400 hover:text-red-300" onclick="deleteMedication('${med.id}')">Delete</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      },
+     
+      updateLifestyleTab: () => {
+        // Update lifestyle tracking UI
+        const today = new Date().toDateString();
+        const todayLifestyle = dataManager.getLifestyle(1).filter(l =>
+          new Date(l.timestamp).toDateString() === today
+        );
+       
+        // Update sodium progress
+        const todaySodium = todayLifestyle.reduce((sum, l) => sum + (l.sodium || 0), 0);
+        const sodiumPercent = Math.min(100, (todaySodium / 2000) * 100);
+        document.getElementById('sodiumProgress').style.width = `${sodiumPercent}%`;
+      },
+     
+      updateReportsTab: () => {
+        // Generate basic reports
+        const period = parseInt(document.getElementById('reportPeriod').value);
+        const vitals = dataManager.getVitals(period);
+       
+        if (vitals.length === 0) {
+          document.getElementById('trendAnalysis').innerHTML = '<p class="text-slate-400">No data available for selected period</p>';
+          return;
+        }
+       
+        // Calculate averages
+        const bpReadings = vitals.filter(v => v.systolic && v.diastolic);
+        const hrReadings = vitals.filter(v => v.heartRate);
+        const weightReadings = vitals.filter(v => v.weight);
+        const bsReadings = vitals.filter(v => v.bloodSugar);
+       
+        if (bpReadings.length > 0) {
+          const avgSys = Math.round(bpReadings.reduce((sum, v) => sum + v.systolic, 0) / bpReadings.length);
+          const avgDia = Math.round(bpReadings.reduce((sum, v) => sum + v.diastolic, 0) / bpReadings.length);
+          document.getElementById('avgBP').textContent = `${avgSys}/${avgDia}`;
+          document.getElementById('bpStatus').textContent =
+            avgSys > 140 || avgDia > 90 ? 'High - consult doctor' :
+            avgSys > 130 || avgDia > 80 ? 'Elevated - monitor' : 'Normal';
+        }
+       
+        if (hrReadings.length > 0) {
+          const avgHR = Math.round(hrReadings.reduce((sum, v) => sum + v.heartRate, 0) / hrReadings.length);
+          document.getElementById('avgHR').textContent = `${avgHR} bpm`;
+          document.getElementById('hrStatus').textContent =
+            avgHR > 100 || avgHR < 60 ? 'Outside normal range' : 'Normal range';
+        }
+       
+        if (weightReadings.length >= 2) {
+          const weightChange = weightReadings[weightReadings.length - 1].weight - weightReadings[0].weight;
+          document.getElementById('weightChange').textContent =
+            `${weightChange > 0 ? '+' : ''}${weightChange.toFixed(1)} lbs`;
+          document.getElementById('weightStatus').textContent =
+            Math.abs(weightChange) > 5 ? 'Significant change' : 'Stable';
+        }
+       
+        if (bsReadings.length > 0) {
+          const avgBS = Math.round(bsReadings.reduce((sum, v) => sum + v.bloodSugar, 0) / bsReadings.length);
+          document.getElementById('avgBS').textContent = `${avgBS} mg/dL`;
+          document.getElementById('bsStatus').textContent =
+            avgBS > 180 ? 'High - needs attention' :
+            avgBS > 140 ? 'Elevated - monitor' : 'Normal range';
+        }
+       
+        // Update data table
+        const tableBody = document.getElementById('dataTableBody');
+        if (vitals.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-slate-400">No data available</td></tr>';
+        } else {
+          tableBody.innerHTML = vitals.slice(-20).reverse().map(v => `
+            <tr class="border-b border-slate-700">
+              <td class="py-2">${utils.formatDate(v.timestamp)}</td>
+              <td class="py-2">${v.systolic && v.diastolic ? `${v.systolic}/${v.diastolic}` : '—'}</td>
+              <td class="py-2">${v.heartRate || '—'}</td>
+              <td class="py-2">${v.weight || '—'}</td>
+              <td class="py-2">${v.bloodSugar || '—'}</td>
+              <td class="py-2">${v.notes || '—'}</td>
+            </tr>
+          `).join('');
+        }
+      }
+    };
+
+
+    // Event handlers
+    const eventHandlers = {
+      init: () => {
+        // Tab navigation
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const tabName = btn.getAttribute('data-tab');
+            uiController.switchTab(tabName);
+          });
+        });
+       
+        // Auto-fill demo button
+        document.getElementById('autoFillBtn').addEventListener('click', () => {
+          document.getElementById('systolic').value = 120 + Math.floor(Math.random() * 20);
+          document.getElementById('diastolic').value = 70 + Math.floor(Math.random() * 20);
+          document.getElementById('heartRate').value = 65 + Math.floor(Math.random() * 25);
+          document.getElementById('oxygenSat').value = 96 + Math.floor(Math.random() * 4);
+          document.getElementById('weight').value = 150 + Math.floor(Math.random() * 50);
+          document.getElementById('temperature').value = (98 + Math.random() * 2).toFixed(1);
+          document.getElementById('bloodSugar').value = 90 + Math.floor(Math.random() * 40);
+          utils.showAlert('Demo data filled in!', 'info');
+        });
+       
+        // Save vitals
+        document.getElementById('saveVitalsBtn').addEventListener('click', () => {
+          const vitalsData = {
+            systolic: parseInt(document.getElementById('systolic').value) || null,
+            diastolic: parseInt(document.getElementById('diastolic').value) || null,
+            heartRate: parseInt(document.getElementById('heartRate').value) || null,
+            oxygenSat: parseInt(document.getElementById('oxygenSat').value) || null,
+            weight: parseFloat(document.getElementById('weight').value) || null,
+            temperature: parseFloat(document.getElementById('temperature').value) || null,
+            bloodSugar: parseInt(document.getElementById('bloodSugar').value) || null,
+            sugarType: document.getElementById('sugarType').value,
+            notes: document.getElementById('vitalsNotes').value.trim() || null
+          };
+         
+          // Validate required fields
+          if (!vitalsData.systolic && !vitalsData.heartRate && !vitalsData.weight) {
+            utils.showAlert('Please enter at least one vital sign', 'error');
+            return;
+          }
+         
+          dataManager.saveVitals(vitalsData);
+          utils.showAlert('Vitals saved successfully!', 'success');
+         
+          // Clear form
+          document.querySelectorAll('#vitals-tab input, #vitals-tab textarea').forEach(input => {
+            if (input.type !== 'submit') input.value = '';
+          });
+         
+          // Update UI
+          uiController.updateDashboard();
+          uiController.updateVitalsTab();
+        });
+       
+        // Save symptoms
+        document.getElementById('saveSymptomsBtn').addEventListener('click', () => {
+          const checkedSymptoms = Array.from(document.querySelectorAll('.symptom-checkbox:checked'))
+            .map(cb => cb.getAttribute('data-symptom'));
+         
+          if (checkedSymptoms.length === 0) {
+            utils.showAlert('Please select at least one symptom', 'error');
+            return;
+          }
+         
+          const symptomsData = {
+            symptoms: checkedSymptoms,
+            severity: parseInt(document.getElementById('severityScale').value),
+            notes: document.getElementById('symptomNotes').value.trim() || null
+          };
+         
+          dataManager.saveSymptoms(symptomsData);
+          utils.showAlert('Symptoms saved successfully!', 'success');
+         
+          // Clear form
+          document.querySelectorAll('.symptom-checkbox').forEach(cb => cb.checked = false);
+          document.getElementById('severityScale').value = 0;
+          document.getElementById('severityValue').textContent = '0';
+          document.getElementById('symptomNotes').value = '';
+         
+          // Update UI
+          uiController.updateSymptomsTab();
+        });
+       
+        // Severity scale
+        document.getElementById('severityScale').addEventListener('input', (e) => {
+          document.getElementById('severityValue').textContent = e.target.value;
+        });
+       
+        // Add medication
+        document.getElementById('addMedicationBtn').addEventListener('click', () => {
+          const medData = {
+            name: document.getElementById('medName').value.trim(),
+            dosage: document.getElementById('medDosage').value.trim(),
+            frequency: document.getElementById('medFrequency').value,
+            time1: document.getElementById('medTime1').value,
+            time2: document.getElementById('medTime2').value,
+            instructions: document.getElementById('medInstructions').value.trim() || null
+          };
+         
+          if (!medData.name || !medData.dosage) {
+            utils.showAlert('Please enter medication name and dosage', 'error');
+            return;
+          }
+         
+          dataManager.saveMedication(medData);
+          utils.showAlert('Medication added successfully!', 'success');
+         
+          // Clear form
+          document.querySelectorAll('#medications-tab input, #medications-tab textarea, #medications-tab select').forEach(input => {
+            if (input.type !== 'submit') input.value = '';
+          });
+         
+          uiController.updateMedicationsTab();
+        });
+       
+        // Lifestyle tracking
+        document.getElementById('addWaterBtn').addEventListener('click', () => {
+          const currentWater = parseInt(document.getElementById('waterIntake').value) || 0;
+          document.getElementById('waterIntake').value = currentWater + 8;
+        });
+       
+        // Energy level slider
+        document.getElementById('energyLevel').addEventListener('input', (e) => {
+          document.getElementById('energyValue').textContent = e.target.value;
+        });
+       
+        // Stress level slider
+        document.getElementById('stressLevel').addEventListener('input', (e) => {
+          document.getElementById('stressValue').textContent = e.target.value;
+        });
+       
+        // Meal buttons
+        document.querySelectorAll('.meal-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            btn.classList.toggle('bg-green-500');
+            btn.classList.toggle('bg-slate-700');
+          });
+        });
+       
+        // Sleep quality buttons
+        document.querySelectorAll('.sleep-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.sleep-btn').forEach(b => {
+              b.classList.remove('bg-blue-500');
+              b.classList.add('bg-slate-700');
+            });
+            btn.classList.add('bg-blue-500');
+            btn.classList.remove('bg-slate-700');
+          });
+        });
+       
+        // Mood buttons
+        document.querySelectorAll('.mood-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.mood-btn').forEach(b => {
+              b.classList.remove('bg-yellow-500');
+              b.classList.add('bg-slate-700');
+            });
+            btn.classList.add('bg-yellow-500');
+            btn.classList.remove('bg-slate-700');
+          });
+        });
+       
+        // Save activity
+        document.getElementById('saveActivityBtn').addEventListener('click', () => {
+          const activityData = {
+            steps: parseInt(document.getElementById('stepsToday').value) || null,
+            exerciseDuration: parseInt(document.getElementById('exerciseDuration').value) || null,
+            activityType: document.getElementById('activityType').value,
+            energyLevel: parseInt(document.getElementById('energyLevel').value)
+          };
+         
+          dataManager.saveLifestyle({ ...activityData, type: 'activity' });
+          utils.showAlert('Activity saved successfully!', 'success');
+          uiController.updateLifestyleTab();
+        });
+       
+        // Save mood & sleep
+        document.getElementById('saveMoodBtn').addEventListener('click', () => {
+          const sleepData = {
+            sleepDuration: parseFloat(document.getElementById('sleepDuration').value) || null,
+            sleepQuality: document.querySelector('.sleep-btn.bg-blue-500')?.getAttribute('data-quality') || null,
+            mood: document.querySelector('.mood-btn.bg-yellow-500')?.getAttribute('data-mood') || null,
+            stressLevel: parseInt(document.getElementById('stressLevel').value)
+          };
+         
+          dataManager.saveLifestyle({ ...sleepData, type: 'mood_sleep' });
+          utils.showAlert('Mood & sleep data saved!', 'success');
+        });
+       
+        // Generate report
+        document.getElementById('generateReport

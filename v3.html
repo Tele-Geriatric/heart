@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>HeartTrack Senior v7 — Complete Health Companion</title>
+    <link rel="preload" href="https://fonts.gstatic.com/s/inter/v13/UcC73FwrK43ryjLWaGFq3g.woff2" as="font" type="font/woff2" crossorigin>
+    
+    <link href="dist/output.css" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self';">
+
+    <style>
+        :root {
+            --bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --card: rgba(30, 41, 59, 0.8);
+            --accent: #06b6d4;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: #f1f5f9;
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .focus-ring:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.3);
+            border-color: var(--accent);
+        }
+        .btn {
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .metric-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        .status-good { color: var(--success); }
+        .status-warning { color: var(--warning); }
+        .status-danger { color: var(--danger); }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <header class="sticky top-0 z-50 glass border-b border-slate-700/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
+                            <span class="text-xl" role="img" aria-label="Heart icon">❤️</span>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold">HeartTrack Senior v7</h1>
+                            <p class="text-xs text-slate-400">Complete Health Companion</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div id="connectionStatus" class="flex items-center space-x-2">
+                        <div class="w-2 h-2 rounded-full bg-green-400" aria-label="Connection Status Indicator"></div>
+                        <span class="text-sm text-slate-300">Online</span>
+                    </div>
+                    <div class="text-sm text-slate-400" id="currentDateTime" aria-live="polite"></div>
+                    <button id="settingsBtn" class="btn p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" aria-label="Open Settings">
+                        <span role="img" aria-label="Settings icon">⚙️</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="alertSystem" class="fixed top-20 right-4 z-50 space-y-2"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" aria-labelledby="metric-summary-heading">
+            <h2 id="metric-summary-heading" class="sr-only">Health Metrics Summary</h2>
+            <article class="metric-card rounded-2xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-400">Health Score</p>
+                        <p id="healthScore" class="text-3xl font-bold text-cyan-400" aria-live="polite">—</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-cyan-400/20 flex items-center justify-center">
+                        <span class="text-2xl" role="img" aria-label="Graph icon">📊</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="w-full bg-slate-700 rounded-full h-2" role="progressbar" aria-labelledby="healthScore" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div id="healthScoreBar" class="bg-gradient-to-r from-cyan-400 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="metric-card rounded-2xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-400">Today's Entries</p>
+                        <p id="todayEntries" class="text-3xl font-bold text-emerald-400" aria-live="polite">0</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-emerald-400/20 flex items-center justify-center">
+                        <span class="text-2xl" role="img" aria-label="Memo icon">📝</span>
+                    </div>
+                </div>
+                <p id="lastEntry" class="text-xs text-slate-400 mt-2">No entries today</p>
+            </article>
+
+            <article class="metric-card rounded-2xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-400">Streak</p>
+                        <p id="streak" class="text-3xl font-bold text-amber-400" aria-live="polite">0</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-amber-400/20 flex items-center justify-center">
+                        <span class="text-2xl" role="img" aria-label="Fire icon">🔥</span>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">Days tracking</p>
+            </article>
+
+            <article class="metric-card rounded-2xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-slate-400">Risk Level</p>
+                        <p id="riskLevel" class="text-3xl font-bold text-slate-400" aria-live="polite">—</p>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-slate-400/20 flex items-center justify-center">
+                        <span id="riskIcon" class="text-2xl" role="img" aria-label="Shield icon">🛡️</span>
+                    </div>
+                </div>
+                <p id="riskDescription" class="text-xs text-slate-400 mt-2">Monitoring...</p>
+            </article>
+        </section>
+
+        <nav class="mb-8" aria-label="Main Navigation">
+            <div class="glass rounded-2xl p-2">
+                <div class="flex space-x-1" role="tablist" id="tabNavigation">
+                    <button class="tab-btn active px-6 py-3 rounded-xl font-medium transition-all" role="tab" aria-selected="true" data-tab="vitals" aria-controls="vitals-tab">
+                        <span role="img" aria-label="Vitals">📊 Vitals</span>
+                    </button>
+                    <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" role="tab" aria-selected="false" data-tab="symptoms" aria-controls="symptoms-tab">
+                        <span role="img" aria-label="Symptoms">🩺 Symptoms</span>
+                    </button>
+                    <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" role="tab" aria-selected="false" data-tab="medications" aria-controls="medications-tab">
+                        <span role="img" aria-label="Medications">💊 Medications</span>
+                    </button>
+                    <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" role="tab" aria-selected="false" data-tab="lifestyle" aria-controls="lifestyle-tab">
+                        <span role="img" aria-label="Lifestyle">🥗 Lifestyle</span>
+                    </button>
+                    <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" role="tab" aria-selected="false" data-tab="reports" aria-controls="reports-tab">
+                        <span role="img" aria-label="Reports">📈 Reports</span>
+                    </button>
+                    <button class="tab-btn px-6 py-3 rounded-xl font-medium transition-all" role="tab" aria-selected="false" data-tab="emergency" aria-controls="emergency-tab">
+                        <span role="img" aria-label="Emergency">🚨 Emergency</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div id="tabContent">
+            
+            <section id="vitals-tab" class="tab-content active" role="tabpanel">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <article class="glass rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold">Record Vitals</h2>
+                            <div class="flex items-center space-x-2">
+                                <span id="vitalsStatus" class="px-3 py-1 rounded-full text-xs bg-slate-700 text-slate-300">Ready</span>
+                                <button id="autoFillBtn" class="btn px-3 py-1 rounded-lg bg-blue-500 hover:bg-blue-400 text-white text-xs">
+                                    Auto-fill Demo
+                                </button>
+                            </div>
+                        </div>
+
+                        <form id="vitalsForm" class="space-y-4">
+                            <fieldset class="grid grid-cols-2 gap-4">
+                                <legend class="sr-only">Blood Pressure</legend>
+                                <div>
+                                    <label for="systolic" class="block text-sm font-medium text-slate-300 mb-2">Systolic BP</label>
+                                    <input id="systolic" type="number" placeholder="120" min="70" max="250" step="1"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                </div>
+                                <div>
+                                    <label for="diastolic" class="block text-sm font-medium text-slate-300 mb-2">Diastolic BP</label>
+                                    <input id="diastolic" type="number" placeholder="80" min="40" max="150" step="1"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="grid grid-cols-2 gap-4">
+                                <legend class="sr-only">Heart Rate and Oxygen</legend>
+                                <div>
+                                    <label for="heartRate" class="block text-sm font-medium text-slate-300 mb-2">Heart Rate (bpm)</label>
+                                    <input id="heartRate" type="number" placeholder="72" min="30" max="200" step="1"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                </div>
+                                <div>
+                                    <label for="oxygenSat" class="block text-sm font-medium text-slate-300 mb-2">Oxygen Saturation (%)</label>
+                                    <input id="oxygenSat" type="number" placeholder="98" min="70" max="100" step="1"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="grid grid-cols-2 gap-4">
+                                <legend class="sr-only">Weight and Temperature</legend>
+                                <div>
+                                    <label for="weight" class="block text-sm font-medium text-slate-300 mb-2">Weight (lbs)</label>
+                                    <input id="weight" type="number" placeholder="150" min="50" max="500" step="0.1"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                </div>
+                                <div>
+                                    <label for="temperature" class="block text-sm font-medium text-slate-300 mb-2">Temperature (°F)</label>
+                                    <input id="temperature" type="number" placeholder="98.6" min="95" max="110" step="0.1"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                </div>
+                            </fieldset>
+
+                            <fieldset class="grid grid-cols-2 gap-4">
+                                <legend class="sr-only">Blood Sugar</legend>
+                                <div>
+                                    <label for="bloodSugar" class="block text-sm font-medium text-slate-300 mb-2">Blood Sugar (mg/dL)</label>
+                                    <input id="bloodSugar" type="number" placeholder="100" min="50" max="500" step="1"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                </div>
+                                <div>
+                                    <label for="sugarType" class="block text-sm font-medium text-slate-300 mb-2">Test Type</label>
+                                    <select id="sugarType" class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3">
+                                        <option value="fasting">Fasting</option>
+                                        <option value="random">Random</option>
+                                        <option value="post-meal">After Meal</option>
+                                        <option value="bedtime">Bedtime</option>
+                                    </select>
+                                </div>
+                            </fieldset>
+
+                            <div>
+                                <label for="vitalsNotes" class="block text-sm font-medium text-slate-300 mb-2">Notes (Optional)</label>
+                                <textarea id="vitalsNotes" rows="3" placeholder="Any additional observations..."
+                                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3"></textarea>
+                            </div>
+
+                            <button type="submit" id="saveVitalsBtn" class="btn w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold text-lg">
+                                <span role="img" aria-label="Save icon">💾</span> Save Vitals
+                            </button>
+                        </form>
+                    </article>
+
+                    <aside class="space-y-6">
+                        <article class="glass rounded-2xl p-6" aria-labelledby="today-summary-heading">
+                            <h3 id="today-summary-heading" class="text-xl font-bold mb-4">Today's Summary</h3>
+                            <div id="todaySummary" class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">Blood Pressure:</span>
+                                    <span id="todayBP" class="font-medium">—</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">Heart Rate:</span>
+                                    <span id="todayHR" class="font-medium">—</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">Weight:</span>
+                                    <span id="todayWeight" class="font-medium">—</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">Blood Sugar:</span>
+                                    <span id="todayBS" class="font-medium">—</span>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="glass rounded-2xl p-6" aria-labelledby="trends-heading">
+                            <h3 id="trends-heading" class="text-xl font-bold mb-4">7-Day Trends</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400">Weight Change:</span>
+                                    <div class="flex items-center space-x-2">
+                                        <span id="weightTrend" class="font-medium">—</span>
+                                        <span id="weightTrendIcon" role="img" aria-label="Trend icon">📊</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400">BP Average:</span>
+                                    <div class="flex items-center space-x-2">
+                                        <span id="bpTrend" class="font-medium">—</span>
+                                        <span id="bpTrendIcon" role="img" aria-label="Trend icon">📊</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-slate-400">HR Average:</span>
+                                    <div class="flex items-center space-x-2">
+                                        <span id="hrTrend" class="font-medium">—</span>
+                                        <span id="hrTrendIcon" role="img" aria-label="Trend icon">📊</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="glass rounded-2xl p-6" aria-labelledby="recent-entries-heading">
+                            <h3 id="recent-entries-heading" class="text-xl font-bold mb-4">Recent Entries</h3>
+                            <div id="recentEntries" class="space-y-3 max-h-64 overflow-y-auto">
+                                <p class="text-slate-400 text-center py-4">No entries yet</p>
+                            </div>
+                        </article>
+                    </aside>
+                </div>
+            </section>
+
+            <section id="symptoms-tab" class="tab-content hidden" role="tabpanel" aria-labelledby="symptoms-tab-btn">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <article class="glass rounded-2xl p-6">
+                        <h2 class="text-2xl font-bold mb-6">Daily Symptom Check</h2>
+                        
+                        <form id="symptomsForm" class="space-y-4">
+                            <fieldset>
+                                <legend class="block text-sm font-medium text-slate-300 mb-2">Select Symptoms</legend>
+                                <div class="grid grid-cols-1 gap-3" id="symptomsList">
+                                </div>
+                            </fieldset>
+                            
+                            <div class="mt-6">
+                                <label for="severityScale" class="block text-sm font-medium text-slate-300 mb-2">Severity Scale</label>
+                                <div class="flex items-center space-x-4">
+                                    <span class="text-sm text-slate-400">None</span>
+                                    <input id="severityScale" type="range" min="0" max="10" value="0"
+                                        class="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" aria-valuetext="Severity: 0 out of 10">
+                                    <span class="text-sm text-slate-400">Severe</span>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <span id="severityValue" class="text-lg font-bold text-cyan-400">0</span>
+                                    <span class="text-sm text-slate-400">/10</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="symptomNotes" class="block text-sm font-medium text-slate-300 mb-2">Additional Notes</label>
+                                <textarea id="symptomNotes" rows="3" placeholder="Describe your symptoms in detail..."
+                                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3"></textarea>
+                            </div>
+
+                            <button type="submit" id="saveSymptomsBtn" class="btn w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-400 hover:to-green-400 text-white font-bold text-lg">
+                                <span role="img" aria-label="Save icon">💾</span> Save Symptoms
+                            </button>
+                        </form>
+                    </article>
+
+                    <aside class="space-y-6">
+                        <article class="glass rounded-2xl p-6" aria-labelledby="today-symptoms-heading">
+                            <h3 id="today-symptoms-heading" class="text-xl font-bold mb-4">Today's Symptoms</h3>
+                            <div id="todaySymptoms" class="space-y-2">
+                                <p class="text-slate-400 text-center py-4">No symptoms recorded today</p>
+                            </div>
+                        </article>
+
+                        <article class="glass rounded-2xl p-6" aria-labelledby="weekly-pattern-heading">
+                            <h3 id="weekly-pattern-heading" class="text-xl font-bold mb-4">Weekly Pattern</h3>
+                            <div id="symptomPatterns" class="space-y-3">
+                                <p class="text-slate-400 text-center py-4">Not enough data yet</p>
+                            </div>
+                        </article>
+
+                        <article class="glass rounded-2xl p-6 border-red-500/30">
+                            <h3 class="text-xl font-bold mb-4 text-red-400">⚠️ Emergency Symptoms</h3>
+                            <div class="space-y-2 text-sm">
+                                <p class="text-slate-300">Call 911 immediately if you experience:</p>
+                                <ul class="list-disc list-inside text-slate-400 space-y-1">
+                                    <li>Severe chest pain or pressure</li>
+                                    <li>Difficulty breathing at rest</li>
+                                    <li>Sudden severe headache</li>
+                                    <li>Loss of consciousness</li>
+                                    <li>Severe dizziness or confusion</li>
+                                </ul>
+                            </div>
+                        </article>
+                    </aside>
+                </div>
+            </section>
+
+            <section id="medications-tab" class="tab-content hidden" role="tabpanel" aria-labelledby="medications-tab-btn">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <article class="glass rounded-2xl p-6">
+                        <h2 class="text-2xl font-bold mb-6">Medication Manager</h2>
+                        
+                        <form id="medicationsForm" class="space-y-4">
+                            <div>
+                                <label for="medName" class="block text-sm font-medium text-slate-300 mb-2">Medication Name</label>
+                                <input id="medName" type="text" placeholder="e.g., Lisinopril"
+                                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="medDosage" class="block text-sm font-medium text-slate-300 mb-2">Dosage</label>
+                                    <input id="medDosage" type="text" placeholder="10mg"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                </div>
+                                <div>
+                                    <label for="medFrequency" class="block text-sm font-medium text-slate-300 mb-2">Frequency</label>
+                                    <select id="medFrequency" class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3">
+                                        <option value="once">Once daily</option>
+                                        <option value="twice">Twice daily</option>
+                                        <option value="three">Three times daily</option>
+                                        <option value="four">Four times daily</option>
+                                        <option value="as-needed">As needed</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="medTime1" class="block text-sm font-medium text-slate-300 mb-2">Time 1</label>
+                                    <input id="medTime1" type="time"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                </div>
+                                <div>
+                                    <label for="medTime2" class="block text-sm font-medium text-slate-300 mb-2">Time 2 (if needed)</label>
+                                    <input id="medTime2" type="time"
+                                        class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="medInstructions" class="block text-sm font-medium text-slate-300 mb-2">Special Instructions</label>
+                                <textarea id="medInstructions" rows="2" placeholder="Take with food, avoid alcohol, etc."
+                                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3"></textarea>
+                            </div>
+
+                            <button type="submit" id="addMedicationBtn" class="btn w-full py-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold text-lg">
+                                <span role="img" aria-label="Add icon">💊</span> Add Medication
+                            </button>
+                        </form>
+                    </article>
+
+                    <aside class="space-y-6">
+                        <article class="glass rounded-2xl p-6" aria-labelledby="current-medications-heading">
+                            <h3 id="current-medications-heading" class="text-xl font-bold mb-4">Current Medications</h3>
+                            <div id="medicationsList" class="space-y-3">
+                                <p class="text-slate-400 text-center py-4">No medications added yet</p>
+                            </div>
+                        </article>
+
+                        <article class="glass rounded-2xl p-6" aria-labelledby="todays-schedule-heading">
+                            <h3 id="todays-schedule-heading" class="text-xl font-bold mb-4">Today's Schedule</h3>
+                            <div id="todaySchedule" class="space-y-3">
+                                <p class="text-slate-400 text-center py-4">No medications scheduled</p>
+                            </div>
+                        </article>
+
+                        <article class="glass rounded-2xl p-6" aria-labelledby="adherence-heading">
+                            <h3 id="adherence-heading" class="text-xl font-bold mb-4">Adherence Tracking</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-400">This Week:</span>
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-32 bg-slate-700 rounded-full h-2" role="progressbar" aria-labelledby="adherence-heading" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                            <div id="adherenceBar" class="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span id="adherencePercent" class="text-sm font-medium" aria-live="polite">0%</span>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-slate-400">
+                                    <span id="adherenceStats">0 of 0 doses taken</span>
+                                </div>
+                            </div>
+                        </article>
+                    </aside>
+                </div>
+            </section>
+
+            <section id="lifestyle-tab" class="tab-content hidden" role="tabpanel" aria-labelledby="lifestyle-tab-btn">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <article class="glass rounded-2xl p-6">
+                        <h3 class="text-xl font-bold mb-4"><span role="img" aria-label="Diet and Nutrition">🥗</span> Diet & Nutrition</h3>
+                        
+                        <form id="dietForm" class="space-y-4">
+                            <div>
+                                <label for="sodiumIntake" class="block text-sm font-medium text-slate-300 mb-2">Sodium Intake (mg)</label>
+                                <input id="sodiumIntake" type="number" placeholder="1500"
+                                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                            </div>
+
+                            <div>
+                                <label for="waterIntake" class="block text-sm font-medium text-slate-300 mb-2">Water Intake (oz)</label>
+                                <div class="flex space-x-2">
+                                    <input id="waterIntake" type="number" placeholder="64"
+                                        class="focus-ring flex-1 rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                                    <button id="addWaterBtn" type="button" class="btn px-4 py-3 rounded-xl bg-blue-500 hover:bg-blue-400 text-white">
+                                        +8oz
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="block text-sm font-medium text-slate-300 mb-2">Meals Today</p>
+                                <div class="grid grid-cols-2 gap-2" role="group" aria-label="Daily meals">
+                                    <button class="meal-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-meal="breakfast" type="button">
+                                        <span role="img" aria-label="Breakfast">🌅 Breakfast</span>
+                                    </button>
+                                    <button class="meal-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-meal="lunch" type="button">
+                                        <span role="img" aria-label="Lunch">🌞 Lunch</span>
+                                    </button>
+                                    <button class="meal-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-meal="dinner" type="button">
+                                        <span role="img" aria-label="Dinner">🌙 Dinner</span>
+                                    </button>
+                                    <button class="meal-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-meal="snack" type="button">
+                                        <span role="img" aria-label="Snack">🍎 Snack</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-slate-600">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-400">Daily Sodium Goal:</span>
+                                    <span class="text-slate-300">2000mg</span>
+                                </div>
+                                <div class="w-full bg-slate-700 rounded-full h-2 mt-2" role="progressbar" aria-labelledby="sodium-goal-progress" aria-valuenow="0" aria-valuemin="0" aria-valuemax="2000">
+                                    <div id="sodiumProgress" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full" style="width: 0%"></div>
+                                </div>
+                                <span id="sodium-goal-progress" class="sr-only">Sodium intake progress</span>
+                            </div>
+                        </form>
+                    </article>
+
+                    <article class="glass rounded-2xl p-6">
+                        <h3 class="text-xl font-bold mb-4"><span role="img" aria-label="Activity and Exercise">🏃‍♂️</span> Activity & Exercise</h3>
+                        
+                        <form id="activityForm" class="space-y-4">
+                            <div>
+                                <label for="stepsToday" class="block text-sm font-medium text-slate-300 mb-2">Steps Today</label>
+                                <input id="stepsToday" type="number" placeholder="5000"
+                                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                            </div>
+
+                            <div>
+                                <label for="exerciseDuration" class="block text-sm font-medium text-slate-300 mb-2">Exercise Duration (minutes)</label>
+                                <input id="exerciseDuration" type="number" placeholder="30"
+                                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                            </div>
+
+                            <div>
+                                <label for="activityType" class="block text-sm font-medium text-slate-300 mb-2">Activity Type</label>
+                                <select id="activityType" class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3">
+                                    <option value="walking">Walking</option>
+                                    <option value="swimming">Swimming</option>
+                                    <option value="cycling">Cycling</option>
+                                    <option value="yoga">Yoga</option>
+                                    <option value="strength">Strength Training</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="energyLevel" class="block text-sm font-medium text-slate-300 mb-2">Energy Level (1-10)</label>
+                                <input id="energyLevel" type="range" min="1" max="10" value="5"
+                                    class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                    <span>Low</span>
+                                    <span id="energyValue" class="text-cyan-400 font-medium">5</span>
+                                    <span>High</span>
+                                </div>
+                            </div>
+
+                            <button id="saveActivityBtn" type="submit" class="btn w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-bold">
+                                <span role="img" aria-label="Save icon">💾</span> Save Activity
+                            </button>
+                        </form>
+                    </article>
+
+                    <article class="glass rounded-2xl p-6">
+                        <h3 class="text-xl font-bold mb-4"><span role="img" aria-label="Sleep and Mood">😴</span> Sleep & Mood</h3>
+                        
+                        <form id="sleepMoodForm" class="space-y-4">
+                            <div>
+                                <label for="sleepDuration" class="block text-sm font-medium text-slate-300 mb-2">Sleep Duration (hours)</label>
+                                <input id="sleepDuration" type="number" placeholder="8" min="0" max="24" step="0.5"
+                                    class="focus-ring w-full rounded-xl border border-slate-600 bg-slate-800 text-white px-4 py-3" required/>
+                            </div>
+
+                            <div>
+                                <p class="block text-sm font-medium text-slate-300 mb-2">Sleep Quality</p>
+                                <div class="grid grid-cols-3 gap-2" role="group" aria-label="Sleep Quality Rating">
+                                    <button class="sleep-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-quality="poor" type="button">
+                                        <span role="img" aria-label="Poor sleep quality">😴 Poor</span>
+                                    </button>
+                                    <button class="sleep-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-quality="fair" type="button">
+                                        <span role="img" aria-label="Fair sleep quality">😐 Fair</span>
+                                    </button>
+                                    <button class="sleep-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-quality="good" type="button">
+                                        <span role="img" aria-label="Good sleep quality">😊 Good</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="block text-sm font-medium text-slate-300 mb-2">Overall Mood</p>
+                                <div class="grid grid-cols-5 gap-1" role="group" aria-label="Mood Rating">
+                                    <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="1" type="button">😢</button>
+                                    <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="2" type="button">😟</button>
+                                    <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="3" type="button">😐</button>
+                                    <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="4" type="button">😊</button>
+                                    <button class="mood-btn btn py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white" data-mood="5" type="button">😄</button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="stressLevel" class="block text-sm font-medium text-slate-300 mb-2">Stress Level (1-10)</label>
+                                <input id="stressLevel" type="range" min="1" max="10" value="5"
+                                    class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                                    <span>Calm</span>
+                                    <span id="stressValue" class="text-cyan-400 font-medium">5</span>
+                                    <span>Stressed</span>
+                                </div>
+                            </div>
+
+                            <button id="saveMoodBtn" type="submit" class="btn w-full py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-bold">
+                                <span role="img" aria-label="Save icon">💾</span> Save Mood & Sleep
+                            </button>
+                        </form>
+                    </article>
+                </div>
+            </section>
+
+            <section id="reports-tab" class="tab-content hidden" role="tabpanel" aria-labelledby="reports-tab-btn">
+                <div class="space-y-6">
+                    <article class="glass rounded-2xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-2xl font-bold"><span role="img" aria-label="Health Reports">📈</span> Health Reports</h2>
+                            <div class="flex space-x-2">
+                                <select id="reportPeriod" class="focus-ring rounded-lg border border-slate-600 bg-slate-800 text-white px-3 py-2">
+                                    <option value="7">Last 7 days</option>
+                                    <option value="30">Last 30 days</option>
+                                    <option value="90">Last 90 days</option>
+                                </select>
+                                <button id="generateReportBtn" type="button" class="btn px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-white">
+                                    Generate Report
+                                </button>
+                                <button id="exportReportBtn" type="button" class="btn px-4 py-2 rounded-lg bg-green-500 hover:bg-green-400 text-white">
+                                    Export PDF
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <article class="metric-card rounded-2xl p-6">
+                            <h4 class="text-sm text-slate-400 mb-2">Average Blood Pressure</h4>
+                            <p id="avgBP" class="text-3xl font-bold text-cyan-400">—</p>
+                        </article>
+                        <article class="metric-card rounded-2xl p-6">
+                            <h4 class="text-sm text-slate-400 mb-2">Average Heart Rate</h4>
+                            <p id="avgHR" class="text-3xl font-bold text-emerald-400">—</p>
+                        </article>
+                        <article class="metric-card rounded-2xl p-6">
+                            <h4 class="text-sm text-slate-400 mb-2">Average Weight</h4>
+                            <p id="avgWeight" class="text-3xl font-bold text-amber-400">—</p>
+                        </article>
+                        <article class="metric-card rounded-2xl p-6">
+                            <h4 class="text-sm text-slate-400 mb-2">Average Blood Sugar</h4>
+                            <p id="avgBS" class="text-3xl font-bold text-red-400">—</p>
+                        </article>
+                    </div>
+
+                    <div id="reportsContent" class="glass rounded-2xl p-6">
+                        <p class="text-center text-slate-400 py-8">Select a period and click "Generate Report" to see your trends.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="emergency-tab" class="tab-content hidden" role="tabpanel" aria-labelledby="emergency-tab-btn">
+                <article class="glass rounded-2xl p-6 border-red-500/30">
+                    <div class="flex flex-col items-center text-center">
+                        <span class="text-6xl mb-4 animate-pulse-fast">🚨</span>
+                        <h2 class="text-3xl font-bold text-red-400 mb-2">Emergency</h2>
+                        <p class="text-slate-300 max-w-lg mb-6">
+                            If you or a loved one are experiencing severe symptoms such as chest pain, difficulty breathing, or loss of consciousness, please do not hesitate.
+                        </p>
+                        <a href="tel:911" class="btn w-full md:w-auto py-4 px-8 rounded-xl bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold text-xl">
+                            <span role="img" aria-label="Phone icon">📞</span> Call 911
+                        </a>
+                        <p class="text-sm text-slate-400 mt-4">
+                            Your location will be automatically provided if you're using this app on a mobile device.
+                        </p>
+                    </div>
+                </article>
+            </section>
+
+        </div>
+    </main>
+    
+    <script src="script.js"></script>
+</body>
+</html>

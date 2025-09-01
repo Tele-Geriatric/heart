@@ -1,0 +1,3342 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronic Disease Management Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .pulse-animation { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+        .nav-item.active { color: #3B82F6; }
+        .nav-item { 
+            color: #9CA3AF; 
+            transition: color 0.2s ease;
+            cursor: pointer;
+        }
+        .nav-item:hover { color: #6B7280; }
+        
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .text-2xl { font-size: 1.25rem; line-height: 1.75rem; }
+            .text-xl { font-size: 1.125rem; line-height: 1.75rem; }
+            .p-6 { padding: 1rem; }
+            .px-6 { padding-left: 1rem; padding-right: 1rem; }
+            .py-6 { padding-top: 1rem; padding-bottom: 1rem; }
+        }
+        
+        /* Fix modal z-index and backdrop */
+        .modal-backdrop {
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+        
+        /* Smooth transitions */
+        .transition-colors {
+            transition-property: color, background-color, border-color;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        /* Touch-friendly buttons */
+        button, .nav-item {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        /* Prevent text selection on buttons */
+        button, .nav-item {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-20">
+    <!-- Dashboard Page -->
+    <div id="dashboard-page" class="page active">
+        <!-- Header -->
+        <div class="gradient-bg text-white p-6 pb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-2xl font-bold" data-translate="health_dashboard">Health Dashboard</h1>
+                    <p class="text-blue-100" data-translate="managing_wellness">Managing your wellness journey</p>
+                </div>
+                <div class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center cursor-pointer" onclick="showProfile()">
+                    <img id="profile-avatar" src="" alt="Profile" class="w-10 h-10 rounded-full hidden">
+                    <span id="profile-initials" class="text-lg font-semibold">JD</span>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-3 gap-4 mt-6">
+                <div class="bg-white bg-opacity-20 rounded-lg p-3 text-center">
+                    <div class="text-2xl font-bold" id="condition-count">3</div>
+                    <div class="text-sm text-blue-100" data-translate="conditions">Conditions</div>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3 text-center">
+                    <div class="text-2xl font-bold" id="due-today-count">2</div>
+                    <div class="text-sm text-blue-100" data-translate="due_today">Due Today</div>
+                </div>
+                <div class="bg-white bg-opacity-20 rounded-lg p-3 text-center">
+                    <div class="text-2xl font-bold" id="adherence-rate">85%</div>
+                    <div class="text-sm text-blue-100" data-translate="adherence">Adherence</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="px-6 -mt-4 pb-6">
+            <!-- Urgent Reminders -->
+            <div id="urgent-reminders" class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg card-shadow">
+                <div class="flex items-center">
+                    <span class="text-red-400 text-xl mr-3 pulse-animation">🔔</span>
+                    <div>
+                        <h3 class="text-red-800 font-semibold">Medication Due</h3>
+                        <p class="text-red-600 text-sm">Blood pressure medication - Take now</p>
+                    </div>
+                    <button class="ml-auto bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors" onclick="markMedicationTaken('bp-med')">
+                        Take Now
+                    </button>
+                </div>
+            </div>
+
+            <!-- Conditions Overview -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800" data-translate="your_conditions">Your Conditions</h2>
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors" onclick="showAddConditionModal()">
+                        + <span data-translate="add_condition">Add Condition</span>
+                    </button>
+                </div>
+                
+                <div id="conditions-container">
+                    <!-- Conditions will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <!-- Today's Care Plan -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800" data-translate="todays_care_plan">Today's Care Plan</h2>
+                    <button class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors" onclick="showAddTaskModal()">
+                        + <span data-translate="add_task">Add Task</span>
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl p-5 card-shadow">
+                    <div id="care-plan-tasks" class="space-y-4">
+                        <!-- Tasks will be dynamically loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Health Insights -->
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">🤖 AI Health Insights</h2>
+                <div id="ai-insights" class="space-y-3">
+                    <!-- AI insights will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Symptom Tracker -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">📝 Symptom Tracker</h2>
+                    <button class="bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-600 transition-colors" onclick="showSymptomModal()">
+                        + Log Symptom
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl p-5 card-shadow">
+                    <div id="recent-symptoms" class="space-y-3">
+                        <!-- Recent symptoms will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mood & Energy Tracker -->
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">😊 Daily Wellness Check</h2>
+                <div class="bg-white rounded-xl p-5 card-shadow">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-center">
+                            <div class="text-sm text-gray-600 mb-2">Today's Mood</div>
+                            <div class="flex justify-center space-x-2" id="mood-selector">
+                                <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setMood('😢', 1)">😢</button>
+                                <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setMood('😐', 2)">😐</button>
+                                <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setMood('🙂', 3)">🙂</button>
+                                <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setMood('😊', 4)">😊</button>
+                                <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setMood('😄', 5)">😄</button>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1" id="mood-status">Tap to set mood</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-sm text-gray-600 mb-2">Energy Level</div>
+                            <div class="flex justify-center items-center space-x-2">
+                                <span class="text-xs text-gray-500">Low</span>
+                                <input type="range" id="energy-slider" min="1" max="10" value="5" class="flex-1" onchange="setEnergy(this.value)">
+                                <span class="text-xs text-gray-500">High</span>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1" id="energy-status">5/10</div>
+                        </div>
+                    </div>
+                    <button class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-lg font-medium hover:from-purple-600 hover:to-pink-600 transition-colors" onclick="saveWellnessCheck()">
+                        Save Today's Check-in
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <button class="bg-white p-4 rounded-xl card-shadow text-center hover:bg-gray-50 transition-colors" onclick="emergencyContact()">
+                        <span class="text-3xl mb-2 block">🚨</span>
+                        <div class="font-medium text-gray-800">Emergency</div>
+                        <div class="text-sm text-gray-500">Contact doctor</div>
+                    </button>
+                    
+                    <button class="bg-white p-4 rounded-xl card-shadow text-center hover:bg-gray-50 transition-colors" onclick="scheduleAppointment()">
+                        <span class="text-3xl mb-2 block">📅</span>
+                        <div class="font-medium text-gray-800">Appointment</div>
+                        <div class="text-sm text-gray-500">Schedule visit</div>
+                    </button>
+                    
+                    <button class="bg-white p-4 rounded-xl card-shadow text-center hover:bg-gray-50 transition-colors" onclick="showVitalSignsModal()">
+                        <span class="text-3xl mb-2 block">🩺</span>
+                        <div class="font-medium text-gray-800">Vital Signs</div>
+                        <div class="text-sm text-gray-500">Log readings</div>
+                    </button>
+                    
+                    <button class="bg-white p-4 rounded-xl card-shadow text-center hover:bg-gray-50 transition-colors" onclick="showMedicationReminder()">
+                        <span class="text-3xl mb-2 block">⏰</span>
+                        <div class="font-medium text-gray-800">Reminders</div>
+                        <div class="text-sm text-gray-500">Set alerts</div>
+                    </button>
+                    
+                    <button class="bg-white p-4 rounded-xl card-shadow text-center hover:bg-gray-50 transition-colors" onclick="showReportModal()">
+                        <span class="text-3xl mb-2 block">📊</span>
+                        <div class="font-medium text-gray-800">Reports</div>
+                        <div class="text-sm text-gray-500">Generate & share</div>
+                    </button>
+                    
+                    <button class="bg-white p-4 rounded-xl card-shadow text-center hover:bg-gray-50 transition-colors" onclick="showDoctorsPage()">
+                        <span class="text-3xl mb-2 block">👨‍⚕️</span>
+                        <div class="font-medium text-gray-800">Doctors</div>
+                        <div class="text-sm text-gray-500">Manage contacts</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medications Page -->
+    <div id="medications-page" class="page">
+        <div class="gradient-bg text-white p-6">
+            <h1 class="text-2xl font-bold">Medications</h1>
+            <p class="text-blue-100">Manage your medication schedule</p>
+        </div>
+        
+        <div class="px-6 py-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Current Medications</h2>
+                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors" onclick="showAddMedicationModal()">
+                    + Add Medication
+                </button>
+            </div>
+            
+            <div id="medications-list" class="space-y-4">
+                <!-- Medications will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Trends Page -->
+    <div id="trends-page" class="page">
+        <div class="gradient-bg text-white p-6">
+            <h1 class="text-2xl font-bold">Health Trends</h1>
+            <p class="text-blue-100">Track your progress over time</p>
+        </div>
+        
+        <div class="px-6 py-6">
+            <div class="mb-6">
+                <div class="flex gap-2 mb-4">
+                    <button class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium" onclick="showTrendPeriod('week')">Week</button>
+                    <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium" onclick="showTrendPeriod('month')">Month</button>
+                    <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium" onclick="showTrendPeriod('year')">Year</button>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 card-shadow mb-4">
+                    <h3 class="font-semibold text-gray-800 mb-4">Blood Pressure Trends</h3>
+                    <div class="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <span class="text-gray-500">📈 Chart visualization would appear here</span>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 card-shadow mb-4">
+                    <h3 class="font-semibold text-gray-800 mb-4">Blood Sugar Trends</h3>
+                    <div class="h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <span class="text-gray-500">📊 Chart visualization would appear here</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 card-shadow mb-4">
+                    <h3 class="font-semibold text-gray-800 mb-4">Mood & Energy Trends</h3>
+                    <div class="h-48 bg-gradient-to-r from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">😊📈</div>
+                            <span class="text-gray-600">Mood tracking shows improvement over the past week</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl p-6 card-shadow mb-4">
+                    <h3 class="font-semibold text-gray-800 mb-4">Symptom Frequency</h3>
+                    <div class="h-48 bg-orange-50 rounded-lg flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">📉✨</div>
+                            <span class="text-gray-600">Symptom frequency has decreased by 30% this month</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nutrition Page -->
+    <div id="nutrition-page" class="page">
+        <div class="gradient-bg text-white p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Nutrition Tracker</h1>
+                    <p class="text-blue-100">Monitor your daily nutrition and hydration</p>
+                </div>
+                <button class="bg-white bg-opacity-20 px-4 py-2 rounded-lg text-sm font-medium hover:bg-opacity-30 transition-colors" onclick="showFoodModal()">
+                    + Log Food
+                </button>
+            </div>
+        </div>
+        
+        <div class="px-6 py-6">
+            <!-- Daily Goals -->
+            <div class="bg-white rounded-xl p-6 card-shadow mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Today's Goals</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center">
+                        <div class="relative w-20 h-20 mx-auto mb-2">
+                            <svg class="w-20 h-20 transform -rotate-90">
+                                <circle cx="40" cy="40" r="36" stroke="#e5e7eb" stroke-width="8" fill="transparent"/>
+                                <circle cx="40" cy="40" r="36" stroke="#3b82f6" stroke-width="8" fill="transparent" stroke-dasharray="226" stroke-dashoffset="68" stroke-linecap="round"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-sm font-bold text-blue-600">70%</span>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600">Calories</div>
+                        <div class="text-xs text-gray-500">1,400 / 2,000</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="relative w-20 h-20 mx-auto mb-2">
+                            <svg class="w-20 h-20 transform -rotate-90">
+                                <circle cx="40" cy="40" r="36" stroke="#e5e7eb" stroke-width="8" fill="transparent"/>
+                                <circle cx="40" cy="40" r="36" stroke="#10b981" stroke-width="8" fill="transparent" stroke-dasharray="226" stroke-dashoffset="45" stroke-linecap="round"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-sm font-bold text-green-600">80%</span>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600">Water</div>
+                        <div class="text-xs text-gray-500">6 / 8 glasses</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meal Log -->
+            <div class="bg-white rounded-xl p-6 card-shadow mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Today's Meals</h3>
+                <div id="meal-log" class="space-y-4">
+                    <!-- Meals will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Quick Add Water -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h3 class="font-semibold text-gray-800 mb-4">💧 Hydration Tracker</h3>
+                <div class="flex items-center justify-between">
+                    <div class="flex space-x-2">
+                        <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors" onclick="addWater(250)">
+                            +250ml
+                        </button>
+                        <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors" onclick="addWater(500)">
+                            +500ml
+                        </button>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-lg font-bold text-blue-600" id="water-count">1,500ml</div>
+                        <div class="text-xs text-gray-500">of 2,000ml goal</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise Page -->
+    <div id="exercise-page" class="page">
+        <div class="gradient-bg text-white p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Exercise Tracker</h1>
+                    <p class="text-blue-100">Track your physical activity and fitness goals</p>
+                </div>
+                <button class="bg-white bg-opacity-20 px-4 py-2 rounded-lg text-sm font-medium hover:bg-opacity-30 transition-colors" onclick="showExerciseModal()">
+                    + Log Activity
+                </button>
+            </div>
+        </div>
+        
+        <div class="px-6 py-6">
+            <!-- Activity Goals -->
+            <div class="bg-white rounded-xl p-6 card-shadow mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Today's Activity</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="relative w-16 h-16 mx-auto mb-2">
+                            <svg class="w-16 h-16 transform -rotate-90">
+                                <circle cx="32" cy="32" r="28" stroke="#e5e7eb" stroke-width="6" fill="transparent"/>
+                                <circle cx="32" cy="32" r="28" stroke="#ef4444" stroke-width="6" fill="transparent" stroke-dasharray="176" stroke-dashoffset="53" stroke-linecap="round"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-xs font-bold text-red-600">70%</span>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600">Steps</div>
+                        <div class="text-xs text-gray-500">7,000 / 10,000</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="relative w-16 h-16 mx-auto mb-2">
+                            <svg class="w-16 h-16 transform -rotate-90">
+                                <circle cx="32" cy="32" r="28" stroke="#e5e7eb" stroke-width="6" fill="transparent"/>
+                                <circle cx="32" cy="32" r="28" stroke="#f59e0b" stroke-width="6" fill="transparent" stroke-dasharray="176" stroke-dashoffset="88" stroke-linecap="round"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-xs font-bold text-yellow-600">50%</span>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600">Exercise</div>
+                        <div class="text-xs text-gray-500">15 / 30 min</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="relative w-16 h-16 mx-auto mb-2">
+                            <svg class="w-16 h-16 transform -rotate-90">
+                                <circle cx="32" cy="32" r="28" stroke="#e5e7eb" stroke-width="6" fill="transparent"/>
+                                <circle cx="32" cy="32" r="28" stroke="#10b981" stroke-width="6" fill="transparent" stroke-dasharray="176" stroke-dashoffset="35" stroke-linecap="round"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-xs font-bold text-green-600">80%</span>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600">Stand</div>
+                        <div class="text-xs text-gray-500">8 / 10 hrs</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="bg-white rounded-xl p-6 card-shadow mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Recent Activities</h3>
+                <div id="exercise-log" class="space-y-4">
+                    <!-- Activities will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Quick Exercise Options -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h3 class="font-semibold text-gray-800 mb-4">🏃‍♂️ Quick Start</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="bg-green-100 text-green-700 p-3 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors" onclick="startQuickExercise('walk')">
+                        🚶‍♂️ Start Walk
+                    </button>
+                    <button class="bg-blue-100 text-blue-700 p-3 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors" onclick="startQuickExercise('stretch')">
+                        🧘‍♀️ Stretch Break
+                    </button>
+                    <button class="bg-purple-100 text-purple-700 p-3 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors" onclick="startQuickExercise('breathing')">
+                        🫁 Breathing Exercise
+                    </button>
+                    <button class="bg-orange-100 text-orange-700 p-3 rounded-lg text-sm font-medium hover:bg-orange-200 transition-colors" onclick="startQuickExercise('physio')">
+                        🏥 Physio Exercises
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Page -->
+    <div id="settings-page" class="page">
+        <div class="gradient-bg text-white p-6">
+            <h1 class="text-2xl font-bold">Settings</h1>
+            <p class="text-blue-100">Customize your app experience</p>
+        </div>
+        
+        <div class="px-6 py-6">
+            <div class="space-y-6">
+                <!-- Profile Settings -->
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h3 class="font-semibold text-gray-800 mb-4">Profile Settings</h3>
+                    <div class="space-y-4">
+                        <button class="w-full text-left p-3 hover:bg-gray-50 rounded-lg flex items-center justify-between" onclick="showProfile()">
+                            <div class="flex items-center">
+                                <span class="text-xl mr-3">👤</span>
+                                <span>Edit Profile</span>
+                            </div>
+                            <span class="text-gray-400">→</span>
+                        </button>
+                        <button class="w-full text-left p-3 hover:bg-gray-50 rounded-lg flex items-center justify-between" onclick="showDoctorsPage()">
+                            <div class="flex items-center">
+                                <span class="text-xl mr-3">👨‍⚕️</span>
+                                <span>Manage Doctors</span>
+                            </div>
+                            <span class="text-gray-400">→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Notification Settings -->
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h3 class="font-semibold text-gray-800 mb-4">Notifications</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span>Medication Reminders</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" checked onchange="toggleSetting('medication-reminders')">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Appointment Reminders</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" checked onchange="toggleSetting('appointment-reminders')">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Health Insights</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" onchange="toggleSetting('health-insights')">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data & Privacy -->
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h3 class="font-semibold text-gray-800 mb-4">Data & Privacy</h3>
+                    <div class="space-y-4">
+                        <button class="w-full text-left p-3 hover:bg-gray-50 rounded-lg flex items-center justify-between" onclick="exportData()">
+                            <div class="flex items-center">
+                                <span class="text-xl mr-3">📤</span>
+                                <span>Export Health Data</span>
+                            </div>
+                            <span class="text-gray-400">→</span>
+                        </button>
+                        <button class="w-full text-left p-3 hover:bg-gray-50 rounded-lg flex items-center justify-between" onclick="showDataSharing()">
+                            <div class="flex items-center">
+                                <span class="text-xl mr-3">🔒</span>
+                                <span>Data Sharing Settings</span>
+                            </div>
+                            <span class="text-gray-400">→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reports -->
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h3 class="font-semibold text-gray-800 mb-4">Health Reports</h3>
+                    <div class="space-y-4">
+                        <button class="w-full text-left p-3 hover:bg-gray-50 rounded-lg flex items-center justify-between" onclick="generateWeeklyReport()">
+                            <div class="flex items-center">
+                                <span class="text-xl mr-3">📊</span>
+                                <span>Generate Weekly Report</span>
+                            </div>
+                            <span class="text-gray-400">→</span>
+                        </button>
+                        <button class="w-full text-left p-3 hover:bg-gray-50 rounded-lg flex items-center justify-between" onclick="generateMonthlyReport()">
+                            <div class="flex items-center">
+                                <span class="text-xl mr-3">📈</span>
+                                <span>Generate Monthly Report</span>
+                            </div>
+                            <span class="text-gray-400">→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- App Settings -->
+                <div class="bg-white rounded-xl p-6 card-shadow">
+                    <h3 class="font-semibold text-gray-800 mb-4">App Settings</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span>Dark Mode</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" onchange="toggleDarkMode()">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                        <div class="p-3 hover:bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center">
+                                    <span class="text-xl mr-3">🌐</span>
+                                    <span data-translate="language">Language</span>
+                                </div>
+                            </div>
+                            <select id="language-selector" class="w-full p-2 border border-gray-300 rounded-lg" onchange="changeLanguage(this.value)">
+                                <option value="en">English</option>
+                                <option value="es">Español</option>
+                                <option value="ar">العربية</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Page -->
+    <div id="profile-page" class="page">
+        <div class="gradient-bg text-white p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Profile</h1>
+                    <p class="text-blue-100">Manage your personal information</p>
+                </div>
+                <button class="text-white hover:text-blue-200" onclick="showDashboard()">
+                    <span class="text-xl">✕</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="px-6 py-6">
+            <!-- Profile Picture -->
+            <div class="bg-white rounded-xl p-6 card-shadow mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                            <img id="profile-pic" src="" alt="Profile" class="w-20 h-20 rounded-full hidden">
+                            <span id="profile-pic-initials" class="text-2xl font-bold text-blue-600">JD</span>
+                        </div>
+                        <button class="absolute -bottom-2 -right-2 bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm hover:bg-blue-600" onclick="changeProfilePicture()">
+                            📷
+                        </button>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-800" id="profile-name">John Doe</h3>
+                        <p class="text-gray-600" id="profile-email">john.doe@email.com</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Information -->
+            <div class="bg-white rounded-xl p-6 card-shadow mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Personal Information</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" id="edit-name" class="w-full p-3 border border-gray-300 rounded-lg" value="John Doe">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="edit-email" class="w-full p-3 border border-gray-300 rounded-lg" value="john.doe@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input type="tel" id="edit-phone" class="w-full p-3 border border-gray-300 rounded-lg" value="+1 (555) 123-4567">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                        <input type="date" id="edit-dob" class="w-full p-3 border border-gray-300 rounded-lg" value="1980-05-15">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
+                        <input type="text" id="edit-emergency" class="w-full p-3 border border-gray-300 rounded-lg" value="Jane Doe - +1 (555) 987-6543">
+                    </div>
+                </div>
+                <button class="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors mt-4" onclick="saveProfile()">
+                    Save Changes
+                </button>
+            </div>
+
+            <!-- Medical Information -->
+            <div class="bg-white rounded-xl p-6 card-shadow">
+                <h3 class="font-semibold text-gray-800 mb-4">Medical Information</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Blood Type</label>
+                        <select id="edit-blood-type" class="w-full p-3 border border-gray-300 rounded-lg">
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+" selected>O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+                        <textarea id="edit-allergies" class="w-full p-3 border border-gray-300 rounded-lg" rows="3" placeholder="List any allergies...">Penicillin, Shellfish</textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Insurance Provider</label>
+                        <input type="text" id="edit-insurance" class="w-full p-3 border border-gray-300 rounded-lg" value="Blue Cross Blue Shield">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctors Page -->
+    <div id="doctors-page" class="page">
+        <div class="gradient-bg text-white p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Healthcare Team</h1>
+                    <p class="text-blue-100">Manage your doctors and specialists</p>
+                </div>
+                <button class="bg-white bg-opacity-20 px-4 py-2 rounded-lg text-sm font-medium hover:bg-opacity-30 transition-colors" onclick="showAddDoctorModal()">
+                    + Add Doctor
+                </button>
+            </div>
+        </div>
+        
+        <div class="px-6 py-6">
+            <div id="doctors-list" class="space-y-4">
+                <!-- Doctors will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2">
+        <div class="flex justify-around">
+            <button class="flex flex-col items-center py-1 nav-item active" onclick="navigateToPage('dashboard', this)">
+                <span class="text-lg mb-1">🏠</span>
+                <span class="text-xs font-medium" data-translate="dashboard">Dashboard</span>
+            </button>
+            <button class="flex flex-col items-center py-1 nav-item" onclick="navigateToPage('medications', this)">
+                <span class="text-lg mb-1">💊</span>
+                <span class="text-xs" data-translate="medications">Meds</span>
+            </button>
+            <button class="flex flex-col items-center py-1 nav-item" onclick="navigateToPage('nutrition', this)">
+                <span class="text-lg mb-1">🍎</span>
+                <span class="text-xs" data-translate="nutrition">Nutrition</span>
+            </button>
+            <button class="flex flex-col items-center py-1 nav-item" onclick="navigateToPage('exercise', this)">
+                <span class="text-lg mb-1">🏃‍♂️</span>
+                <span class="text-xs" data-translate="exercise">Exercise</span>
+            </button>
+            <button class="flex flex-col items-center py-1 nav-item" onclick="navigateToPage('trends', this)">
+                <span class="text-lg mb-1">📈</span>
+                <span class="text-xs" data-translate="trends">Trends</span>
+            </button>
+            <button class="flex flex-col items-center py-1 nav-item" onclick="navigateToPage('settings', this)">
+                <span class="text-lg mb-1">⚙️</span>
+                <span class="text-xs" data-translate="settings">Settings</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+            <div class="text-center">
+                <span class="text-4xl mb-4 block">✅</span>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2" id="modalTitle">Success!</h3>
+                <p class="text-gray-600 mb-4" id="modalMessage">Operation completed successfully.</p>
+                <button class="bg-blue-500 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors" onclick="closeModal()">
+                    Continue
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Condition Modal -->
+    <div id="addConditionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Add New Condition</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeAddConditionModal()">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Condition Name</label>
+                    <input type="text" id="new-condition-name" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="e.g., Type 2 Diabetes">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                    <select id="new-condition-icon" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="🩺">🩺 General</option>
+                        <option value="❤️">❤️ Heart</option>
+                        <option value="🦴">🦴 Bones/Joints</option>
+                        <option value="🧠">🧠 Neurological</option>
+                        <option value="🫁">🫁 Respiratory</option>
+                        <option value="🩸">🩸 Blood</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select id="new-condition-status" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="good">Good</option>
+                        <option value="monitor">Monitor</option>
+                        <option value="concern">Concern</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea id="new-condition-notes" class="w-full p-3 border border-gray-300 rounded-lg" rows="3" placeholder="Additional notes..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeAddConditionModal()">
+                        Cancel
+                    </button>
+                    <button class="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors" onclick="addCondition()">
+                        Add Condition
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Doctor Modal -->
+    <div id="addDoctorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Add Doctor</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeAddDoctorModal()">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Doctor Name</label>
+                    <input type="text" id="new-doctor-name" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Dr. Smith">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                    <input type="text" id="new-doctor-specialty" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Cardiologist">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input type="tel" id="new-doctor-phone" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="+1 (555) 123-4567">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="new-doctor-email" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="doctor@clinic.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <textarea id="new-doctor-address" class="w-full p-3 border border-gray-300 rounded-lg" rows="3" placeholder="Clinic address..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeAddDoctorModal()">
+                        Cancel
+                    </button>
+                    <button class="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors" onclick="addDoctor()">
+                        Add Doctor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Generation Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full">
+            <div class="text-center">
+                <span class="text-4xl mb-4 block">📊</span>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Generate Health Report</h3>
+                <p class="text-gray-600 mb-6">Choose the type of report you'd like to generate</p>
+                <div class="space-y-3">
+                    <button class="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors" onclick="generateWeeklyReport()">
+                        Weekly Report
+                    </button>
+                    <button class="w-full bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors" onclick="generateMonthlyReport()">
+                        Monthly Report
+                    </button>
+                    <button class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeReportModal()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contact Modal -->
+    <div id="emergencyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full">
+            <div class="text-center">
+                <span class="text-4xl mb-4 block">🚨</span>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Emergency Contact</h3>
+                <p class="text-gray-600 mb-6">Choose who to contact in this emergency</p>
+                <div class="space-y-3">
+                    <button class="w-full bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition-colors" onclick="callEmergencyServices()">
+                        🚑 Call 911 (Emergency Services)
+                    </button>
+                    <button class="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors" onclick="callPrimaryDoctor()">
+                        👨‍⚕️ Call Primary Doctor
+                    </button>
+                    <button class="w-full bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors" onclick="callEmergencyContact()">
+                        👤 Call Emergency Contact
+                    </button>
+                    <button class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeEmergencyModal()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment Scheduling Modal -->
+    <div id="appointmentModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Schedule Appointment</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeAppointmentModal()">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Select Doctor</label>
+                    <select id="appointment-doctor" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="">Choose a doctor...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Appointment Type</label>
+                    <select id="appointment-type" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="routine">Routine Check-up</option>
+                        <option value="followup">Follow-up Visit</option>
+                        <option value="urgent">Urgent Care</option>
+                        <option value="consultation">Consultation</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Date</label>
+                    <input type="date" id="appointment-date" class="w-full p-3 border border-gray-300 rounded-lg" min="">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Time</label>
+                    <select id="appointment-time" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="14:00">2:00 PM</option>
+                        <option value="15:00">3:00 PM</option>
+                        <option value="16:00">4:00 PM</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Reason for Visit</label>
+                    <textarea id="appointment-reason" class="w-full p-3 border border-gray-300 rounded-lg" rows="3" placeholder="Describe the reason for your visit..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeAppointmentModal()">
+                        Cancel
+                    </button>
+                    <button class="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors" onclick="scheduleAppointmentSubmit()">
+                        Schedule
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800" data-translate="add_new_task">Add New Task</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeAddTaskModal()">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="task_name">Task Name</label>
+                    <input type="text" id="new-task-name" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="e.g., Blood pressure check">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="task_detail">Task Detail</label>
+                    <input type="text" id="new-task-detail" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="e.g., Record morning reading">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="time">Time</label>
+                    <input type="time" id="new-task-time" class="w-full p-3 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" data-translate="color">Color</label>
+                    <select id="new-task-color" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="blue">Blue</option>
+                        <option value="green">Green</option>
+                        <option value="orange">Orange</option>
+                        <option value="purple">Purple</option>
+                        <option value="red">Red</option>
+                        <option value="yellow">Yellow</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeAddTaskModal()">
+                        <span data-translate="cancel">Cancel</span>
+                    </button>
+                    <button class="flex-1 bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors" onclick="addTask()">
+                        <span data-translate="add_task">Add Task</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Medication Modal -->
+    <div id="addMedicationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Add New Medication</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeAddMedicationModal()">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Medication Name</label>
+                    <input type="text" id="new-med-name" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="e.g., Aspirin">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Dosage</label>
+                    <input type="text" id="new-med-dosage" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="e.g., 100mg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
+                    <select id="new-med-frequency" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="Once daily">Once daily</option>
+                        <option value="Twice daily">Twice daily</option>
+                        <option value="Three times daily">Three times daily</option>
+                        <option value="Four times daily">Four times daily</option>
+                        <option value="As needed">As needed</option>
+                        <option value="Weekly">Weekly</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Time(s)</label>
+                    <input type="text" id="new-med-time" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="e.g., 8:00 AM, 8:00 PM">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Related Condition</label>
+                    <select id="new-med-condition" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="">Select condition...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Instructions</label>
+                    <textarea id="new-med-instructions" class="w-full p-3 border border-gray-300 rounded-lg" rows="3" placeholder="Special instructions (e.g., take with food)..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeAddMedicationModal()">
+                        Cancel
+                    </button>
+                    <button class="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors" onclick="addMedication()">
+                        Add Medication
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Symptom Tracker Modal -->
+    <div id="symptomModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Log Symptom</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeSymptomModal()">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Symptom</label>
+                    <select id="symptom-type" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="">Select symptom...</option>
+                        <option value="pain">Pain</option>
+                        <option value="fatigue">Fatigue</option>
+                        <option value="nausea">Nausea</option>
+                        <option value="headache">Headache</option>
+                        <option value="dizziness">Dizziness</option>
+                        <option value="shortness-of-breath">Shortness of Breath</option>
+                        <option value="chest-pain">Chest Pain</option>
+                        <option value="joint-stiffness">Joint Stiffness</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div id="custom-symptom-div" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Custom Symptom</label>
+                    <input type="text" id="custom-symptom" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="Describe your symptom">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Severity (1-10)</label>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">Mild</span>
+                        <input type="range" id="symptom-severity" min="1" max="10" value="5" class="flex-1">
+                        <span class="text-sm text-gray-500">Severe</span>
+                    </div>
+                    <div class="text-center text-sm text-gray-600 mt-1" id="severity-display">5/10</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Location (if applicable)</label>
+                    <input type="text" id="symptom-location" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="e.g., Lower back, Left knee">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                    <select id="symptom-duration" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="minutes">A few minutes</option>
+                        <option value="hours">A few hours</option>
+                        <option value="all-day">All day</option>
+                        <option value="days">Several days</option>
+                        <option value="ongoing">Ongoing</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea id="symptom-notes" class="w-full p-3 border border-gray-300 rounded-lg" rows="3" placeholder="Any additional details..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeSymptomModal()">
+                        Cancel
+                    </button>
+                    <button class="flex-1 bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 transition-colors" onclick="logSymptom()">
+                        Log Symptom
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vital Signs Modal -->
+    <div id="vitalSignsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Log Vital Signs</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeVitalSignsModal()">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Systolic BP</label>
+                        <input type="number" id="systolic-bp" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="120">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Diastolic BP</label>
+                        <input type="number" id="diastolic-bp" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="80">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Heart Rate (BPM)</label>
+                    <input type="number" id="heart-rate" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="72">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Blood Sugar (mg/dL)</label>
+                    <input type="number" id="blood-sugar" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="100">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Weight (lbs)</label>
+                    <input type="number" id="weight" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="150">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Temperature (°F)</label>
+                    <input type="number" id="temperature" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="98.6" step="0.1">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea id="vital-notes" class="w-full p-3 border border-gray-300 rounded-lg" rows="2" placeholder="Any observations..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeVitalSignsModal()">
+                        Cancel
+                    </button>
+                    <button class="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors" onclick="logVitalSigns()">
+                        Save Readings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Food Log Modal -->
+    <div id="foodModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Log Food</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeFoodModal()">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Meal Type</label>
+                    <select id="meal-type" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                        <option value="snack">Snack</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Food Item</label>
+                    <input type="text" id="food-item" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="e.g., Grilled chicken salad">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Calories</label>
+                        <input type="number" id="food-calories" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="350">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Portion Size</label>
+                        <input type="text" id="food-portion" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="1 cup">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea id="food-notes" class="w-full p-3 border border-gray-300 rounded-lg" rows="2" placeholder="How did you feel after eating?"></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeFoodModal()">
+                        Cancel
+                    </button>
+                    <button class="flex-1 bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors" onclick="logFood()">
+                        Log Food
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exercise Modal -->
+    <div id="exerciseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Log Exercise</h3>
+                <button class="text-gray-400 hover:text-gray-600" onclick="closeExerciseModal()">✕</button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Activity Type</label>
+                    <select id="exercise-type" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="walking">Walking</option>
+                        <option value="running">Running</option>
+                        <option value="cycling">Cycling</option>
+                        <option value="swimming">Swimming</option>
+                        <option value="yoga">Yoga</option>
+                        <option value="stretching">Stretching</option>
+                        <option value="strength">Strength Training</option>
+                        <option value="physiotherapy">Physiotherapy</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                    <input type="number" id="exercise-duration" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="30">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Intensity</label>
+                    <select id="exercise-intensity" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <option value="light">Light</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="vigorous">Vigorous</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">How did you feel?</label>
+                    <div class="flex justify-center space-x-2 mb-2">
+                        <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setExerciseFeeling('😫', 1)">😫</button>
+                        <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setExerciseFeeling('😓', 2)">😓</button>
+                        <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setExerciseFeeling('😐', 3)">😐</button>
+                        <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setExerciseFeeling('🙂', 4)">🙂</button>
+                        <button class="w-10 h-10 text-2xl hover:scale-110 transition-transform" onclick="setExerciseFeeling('😊', 5)">😊</button>
+                    </div>
+                    <div class="text-center text-xs text-gray-500" id="exercise-feeling-status">Tap to rate</div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <textarea id="exercise-notes" class="w-full p-3 border border-gray-300 rounded-lg" rows="2" placeholder="Any observations or achievements..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeExerciseModal()">
+                        Cancel
+                    </button>
+                    <button class="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 transition-colors" onclick="logExercise()">
+                        Log Activity
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medication Reminder Modal -->
+    <div id="medicationReminderModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-6 hidden z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full">
+            <div class="text-center">
+                <span class="text-4xl mb-4 block">⏰</span>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Set Medication Reminders</h3>
+                <p class="text-gray-600 mb-6">Choose how you'd like to be reminded about your medications</p>
+                <div class="space-y-3">
+                    <button class="w-full bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors" onclick="setReminderType('push')">
+                        📱 Push Notifications
+                    </button>
+                    <button class="w-full bg-green-500 text-white py-3 rounded-lg font-medium hover:bg-green-600 transition-colors" onclick="setReminderType('email')">
+                        📧 Email Reminders
+                    </button>
+                    <button class="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 transition-colors" onclick="setReminderType('sms')">
+                        💬 SMS Alerts
+                    </button>
+                    <button class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors" onclick="closeMedicationReminderModal()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Translation System
+        const translations = {
+            en: {
+                health_dashboard: "Health Dashboard",
+                managing_wellness: "Managing your wellness journey",
+                conditions: "Conditions",
+                due_today: "Due Today",
+                adherence: "Adherence",
+                medication_due: "Medication Due",
+                blood_pressure_medication: "Blood pressure medication - Take now",
+                take_now: "Take Now",
+                your_conditions: "Your Conditions",
+                add_condition: "Add Condition",
+                todays_care_plan: "Today's Care Plan",
+                add_task: "Add Task",
+                quick_actions: "Quick Actions",
+                emergency: "Emergency",
+                contact_doctor: "Contact doctor",
+                appointment: "Appointment",
+                schedule_visit: "Schedule visit",
+                reports: "Reports",
+                generate_share: "Generate & share",
+                doctors: "Doctors",
+                manage_contacts: "Manage contacts",
+                medications: "Medications",
+                manage_medication_schedule: "Manage your medication schedule",
+                current_medications: "Current Medications",
+                add_medication: "Add Medication",
+                health_trends: "Health Trends",
+                track_progress: "Track your progress over time",
+                settings: "Settings",
+                customize_experience: "Customize your app experience",
+                dashboard: "Dashboard",
+                trends: "Trends",
+                profile_settings: "Profile Settings",
+                edit_profile: "Edit Profile",
+                manage_doctors: "Manage Doctors",
+                notifications: "Notifications",
+                medication_reminders: "Medication Reminders",
+                appointment_reminders: "Appointment Reminders",
+                health_insights: "Health Insights",
+                data_privacy: "Data & Privacy",
+                export_health_data: "Export Health Data",
+                data_sharing_settings: "Data Sharing Settings",
+                health_reports: "Health Reports",
+                generate_weekly_report: "Generate Weekly Report",
+                generate_monthly_report: "Generate Monthly Report",
+                app_settings: "App Settings",
+                dark_mode: "Dark Mode",
+                language: "Language",
+                profile: "Profile",
+                manage_personal_info: "Manage your personal information",
+                personal_information: "Personal Information",
+                full_name: "Full Name",
+                email: "Email",
+                phone: "Phone",
+                date_of_birth: "Date of Birth",
+                emergency_contact: "Emergency Contact",
+                save_changes: "Save Changes",
+                medical_information: "Medical Information",
+                blood_type: "Blood Type",
+                allergies: "Allergies",
+                insurance_provider: "Insurance Provider",
+                healthcare_team: "Healthcare Team",
+                manage_doctors_specialists: "Manage your doctors and specialists",
+                add_doctor: "Add Doctor",
+                success: "Success!",
+                operation_completed: "Operation completed successfully.",
+                continue: "Continue",
+                add_new_condition: "Add New Condition",
+                condition_name: "Condition Name",
+                icon: "Icon",
+                general: "General",
+                heart: "Heart",
+                bones_joints: "Bones/Joints",
+                neurological: "Neurological",
+                respiratory: "Respiratory",
+                blood: "Blood",
+                status: "Status",
+                good: "Good",
+                monitor: "Monitor",
+                concern: "Concern",
+                notes: "Notes",
+                cancel: "Cancel",
+                doctor_name: "Doctor Name",
+                specialty: "Specialty",
+                address: "Address",
+                generate_health_report: "Generate Health Report",
+                choose_report_type: "Choose the type of report you'd like to generate",
+                weekly_report: "Weekly Report",
+                monthly_report: "Monthly Report",
+                emergency_contact_title: "Emergency Contact",
+                choose_emergency_contact: "Choose who to contact in this emergency",
+                call_911: "Call 911 (Emergency Services)",
+                call_primary_doctor: "Call Primary Doctor",
+                call_emergency_contact: "Call Emergency Contact",
+                schedule_appointment: "Schedule Appointment",
+                select_doctor: "Select Doctor",
+                choose_doctor: "Choose a doctor...",
+                appointment_type: "Appointment Type",
+                routine_checkup: "Routine Check-up",
+                followup_visit: "Follow-up Visit",
+                urgent_care: "Urgent Care",
+                consultation: "Consultation",
+                preferred_date: "Preferred Date",
+                preferred_time: "Preferred Time",
+                reason_for_visit: "Reason for Visit",
+                describe_reason: "Describe the reason for your visit...",
+                schedule: "Schedule",
+                add_new_medication: "Add New Medication",
+                medication_name: "Medication Name",
+                dosage: "Dosage",
+                frequency: "Frequency",
+                once_daily: "Once daily",
+                twice_daily: "Twice daily",
+                three_times_daily: "Three times daily",
+                four_times_daily: "Four times daily",
+                as_needed: "As needed",
+                weekly: "Weekly",
+                time: "Time",
+                times: "Time(s)",
+                related_condition: "Related Condition",
+                select_condition: "Select condition...",
+                instructions: "Instructions",
+                special_instructions: "Special instructions (e.g., take with food)...",
+                add_new_task: "Add New Task",
+                task_name: "Task Name",
+                task_detail: "Task Detail",
+                color: "Color",
+                week: "Week",
+                month: "Month",
+                year: "Year"
+            },
+            es: {
+                health_dashboard: "Panel de Salud",
+                managing_wellness: "Gestionando tu viaje de bienestar",
+                conditions: "Condiciones",
+                due_today: "Vence Hoy",
+                adherence: "Adherencia",
+                medication_due: "Medicamento Vencido",
+                blood_pressure_medication: "Medicamento para la presión arterial - Tomar ahora",
+                take_now: "Tomar Ahora",
+                your_conditions: "Tus Condiciones",
+                add_condition: "Agregar Condición",
+                todays_care_plan: "Plan de Cuidado de Hoy",
+                add_task: "Agregar Tarea",
+                quick_actions: "Acciones Rápidas",
+                emergency: "Emergencia",
+                contact_doctor: "Contactar doctor",
+                appointment: "Cita",
+                schedule_visit: "Programar visita",
+                reports: "Reportes",
+                generate_share: "Generar y compartir",
+                doctors: "Doctores",
+                manage_contacts: "Gestionar contactos",
+                medications: "Medicamentos",
+                manage_medication_schedule: "Gestiona tu horario de medicamentos",
+                current_medications: "Medicamentos Actuales",
+                add_medication: "Agregar Medicamento",
+                health_trends: "Tendencias de Salud",
+                track_progress: "Rastrea tu progreso a lo largo del tiempo",
+                settings: "Configuración",
+                customize_experience: "Personaliza tu experiencia de la aplicación",
+                dashboard: "Panel",
+                trends: "Tendencias",
+                profile_settings: "Configuración de Perfil",
+                edit_profile: "Editar Perfil",
+                manage_doctors: "Gestionar Doctores",
+                notifications: "Notificaciones",
+                medication_reminders: "Recordatorios de Medicamentos",
+                appointment_reminders: "Recordatorios de Citas",
+                health_insights: "Perspectivas de Salud",
+                data_privacy: "Datos y Privacidad",
+                export_health_data: "Exportar Datos de Salud",
+                data_sharing_settings: "Configuración de Compartir Datos",
+                health_reports: "Reportes de Salud",
+                generate_weekly_report: "Generar Reporte Semanal",
+                generate_monthly_report: "Generar Reporte Mensual",
+                app_settings: "Configuración de la App",
+                dark_mode: "Modo Oscuro",
+                language: "Idioma",
+                profile: "Perfil",
+                manage_personal_info: "Gestiona tu información personal",
+                personal_information: "Información Personal",
+                full_name: "Nombre Completo",
+                email: "Correo Electrónico",
+                phone: "Teléfono",
+                date_of_birth: "Fecha de Nacimiento",
+                emergency_contact: "Contacto de Emergencia",
+                save_changes: "Guardar Cambios",
+                medical_information: "Información Médica",
+                blood_type: "Tipo de Sangre",
+                allergies: "Alergias",
+                insurance_provider: "Proveedor de Seguro",
+                healthcare_team: "Equipo de Salud",
+                manage_doctors_specialists: "Gestiona tus doctores y especialistas",
+                add_doctor: "Agregar Doctor",
+                success: "¡Éxito!",
+                operation_completed: "Operación completada exitosamente.",
+                continue: "Continuar",
+                add_new_condition: "Agregar Nueva Condición",
+                condition_name: "Nombre de la Condición",
+                icon: "Icono",
+                general: "General",
+                heart: "Corazón",
+                bones_joints: "Huesos/Articulaciones",
+                neurological: "Neurológico",
+                respiratory: "Respiratorio",
+                blood: "Sangre",
+                status: "Estado",
+                good: "Bueno",
+                monitor: "Monitorear",
+                concern: "Preocupación",
+                notes: "Notas",
+                cancel: "Cancelar",
+                doctor_name: "Nombre del Doctor",
+                specialty: "Especialidad",
+                address: "Dirección",
+                generate_health_report: "Generar Reporte de Salud",
+                choose_report_type: "Elige el tipo de reporte que te gustaría generar",
+                weekly_report: "Reporte Semanal",
+                monthly_report: "Reporte Mensual",
+                emergency_contact_title: "Contacto de Emergencia",
+                choose_emergency_contact: "Elige a quién contactar en esta emergencia",
+                call_911: "Llamar al 911 (Servicios de Emergencia)",
+                call_primary_doctor: "Llamar al Doctor Principal",
+                call_emergency_contact: "Llamar al Contacto de Emergencia",
+                schedule_appointment: "Programar Cita",
+                select_doctor: "Seleccionar Doctor",
+                choose_doctor: "Elige un doctor...",
+                appointment_type: "Tipo de Cita",
+                routine_checkup: "Chequeo de Rutina",
+                followup_visit: "Visita de Seguimiento",
+                urgent_care: "Cuidado Urgente",
+                consultation: "Consulta",
+                preferred_date: "Fecha Preferida",
+                preferred_time: "Hora Preferida",
+                reason_for_visit: "Razón de la Visita",
+                describe_reason: "Describe la razón de tu visita...",
+                schedule: "Programar",
+                add_new_medication: "Agregar Nuevo Medicamento",
+                medication_name: "Nombre del Medicamento",
+                dosage: "Dosis",
+                frequency: "Frecuencia",
+                once_daily: "Una vez al día",
+                twice_daily: "Dos veces al día",
+                three_times_daily: "Tres veces al día",
+                four_times_daily: "Cuatro veces al día",
+                as_needed: "Según sea necesario",
+                weekly: "Semanal",
+                time: "Hora",
+                times: "Hora(s)",
+                related_condition: "Condición Relacionada",
+                select_condition: "Seleccionar condición...",
+                instructions: "Instrucciones",
+                special_instructions: "Instrucciones especiales (ej., tomar con comida)...",
+                add_new_task: "Agregar Nueva Tarea",
+                task_name: "Nombre de la Tarea",
+                task_detail: "Detalle de la Tarea",
+                color: "Color",
+                week: "Semana",
+                month: "Mes",
+                year: "Año"
+            },
+            ar: {
+                health_dashboard: "لوحة الصحة",
+                managing_wellness: "إدارة رحلة العافية الخاصة بك",
+                conditions: "الحالات",
+                due_today: "مستحق اليوم",
+                adherence: "الالتزام",
+                medication_due: "دواء مستحق",
+                blood_pressure_medication: "دواء ضغط الدم - تناول الآن",
+                take_now: "تناول الآن",
+                your_conditions: "حالاتك",
+                add_condition: "إضافة حالة",
+                todays_care_plan: "خطة الرعاية اليوم",
+                add_task: "إضافة مهمة",
+                quick_actions: "إجراءات سريعة",
+                emergency: "طوارئ",
+                contact_doctor: "الاتصال بالطبيب",
+                appointment: "موعد",
+                schedule_visit: "جدولة زيارة",
+                reports: "التقارير",
+                generate_share: "إنشاء ومشاركة",
+                doctors: "الأطباء",
+                manage_contacts: "إدارة جهات الاتصال",
+                medications: "الأدوية",
+                manage_medication_schedule: "إدارة جدول الأدوية الخاص بك",
+                current_medications: "الأدوية الحالية",
+                add_medication: "إضافة دواء",
+                health_trends: "اتجاهات الصحة",
+                track_progress: "تتبع تقدمك مع مرور الوقت",
+                settings: "الإعدادات",
+                customize_experience: "تخصيص تجربة التطبيق الخاصة بك",
+                dashboard: "لوحة التحكم",
+                trends: "الاتجاهات",
+                profile_settings: "إعدادات الملف الشخصي",
+                edit_profile: "تحرير الملف الشخصي",
+                manage_doctors: "إدارة الأطباء",
+                notifications: "الإشعارات",
+                medication_reminders: "تذكيرات الأدوية",
+                appointment_reminders: "تذكيرات المواعيد",
+                health_insights: "رؤى صحية",
+                data_privacy: "البيانات والخصوصية",
+                export_health_data: "تصدير البيانات الصحية",
+                data_sharing_settings: "إعدادات مشاركة البيانات",
+                health_reports: "التقارير الصحية",
+                generate_weekly_report: "إنشاء تقرير أسبوعي",
+                generate_monthly_report: "إنشاء تقرير شهري",
+                app_settings: "إعدادات التطبيق",
+                dark_mode: "الوضع المظلم",
+                language: "اللغة",
+                profile: "الملف الشخصي",
+                manage_personal_info: "إدارة معلوماتك الشخصية",
+                personal_information: "المعلومات الشخصية",
+                full_name: "الاسم الكامل",
+                email: "البريد الإلكتروني",
+                phone: "الهاتف",
+                date_of_birth: "تاريخ الميلاد",
+                emergency_contact: "جهة اتصال الطوارئ",
+                save_changes: "حفظ التغييرات",
+                medical_information: "المعلومات الطبية",
+                blood_type: "فصيلة الدم",
+                allergies: "الحساسية",
+                insurance_provider: "مقدم التأمين",
+                healthcare_team: "فريق الرعاية الصحية",
+                manage_doctors_specialists: "إدارة أطبائك والمتخصصين",
+                add_doctor: "إضافة طبيب",
+                success: "نجح!",
+                operation_completed: "تمت العملية بنجاح.",
+                continue: "متابعة",
+                add_new_condition: "إضافة حالة جديدة",
+                condition_name: "اسم الحالة",
+                icon: "الأيقونة",
+                general: "عام",
+                heart: "القلب",
+                bones_joints: "العظام/المفاصل",
+                neurological: "عصبي",
+                respiratory: "تنفسي",
+                blood: "الدم",
+                status: "الحالة",
+                good: "جيد",
+                monitor: "مراقبة",
+                concern: "قلق",
+                notes: "ملاحظات",
+                cancel: "إلغاء",
+                doctor_name: "اسم الطبيب",
+                specialty: "التخصص",
+                address: "العنوان",
+                generate_health_report: "إنشاء تقرير صحي",
+                choose_report_type: "اختر نوع التقرير الذي تريد إنشاؤه",
+                weekly_report: "تقرير أسبوعي",
+                monthly_report: "تقرير شهري",
+                emergency_contact_title: "جهة اتصال الطوارئ",
+                choose_emergency_contact: "اختر من تريد الاتصال به في هذه الحالة الطارئة",
+                call_911: "اتصل بـ 911 (خدمات الطوارئ)",
+                call_primary_doctor: "اتصل بالطبيب الأساسي",
+                call_emergency_contact: "اتصل بجهة اتصال الطوارئ",
+                schedule_appointment: "جدولة موعد",
+                select_doctor: "اختيار طبيب",
+                choose_doctor: "اختر طبيباً...",
+                appointment_type: "نوع الموعد",
+                routine_checkup: "فحص روتيني",
+                followup_visit: "زيارة متابعة",
+                urgent_care: "رعاية عاجلة",
+                consultation: "استشارة",
+                preferred_date: "التاريخ المفضل",
+                preferred_time: "الوقت المفضل",
+                reason_for_visit: "سبب الزيارة",
+                describe_reason: "اوصف سبب زيارتك...",
+                schedule: "جدولة",
+                add_new_medication: "إضافة دواء جديد",
+                medication_name: "اسم الدواء",
+                dosage: "الجرعة",
+                frequency: "التكرار",
+                once_daily: "مرة واحدة يومياً",
+                twice_daily: "مرتين يومياً",
+                three_times_daily: "ثلاث مرات يومياً",
+                four_times_daily: "أربع مرات يومياً",
+                as_needed: "حسب الحاجة",
+                weekly: "أسبوعياً",
+                time: "الوقت",
+                times: "الأوقات",
+                related_condition: "الحالة ذات الصلة",
+                select_condition: "اختيار حالة...",
+                instructions: "التعليمات",
+                special_instructions: "تعليمات خاصة (مثل، تناول مع الطعام)...",
+                add_new_task: "إضافة مهمة جديدة",
+                task_name: "اسم المهمة",
+                task_detail: "تفاصيل المهمة",
+                color: "اللون",
+                week: "أسبوع",
+                month: "شهر",
+                year: "سنة"
+            }
+        };
+
+        let currentLanguage = 'en';
+
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.documentElement.lang = lang;
+            
+            // Update all translatable elements
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+            
+            // Update placeholders
+            updatePlaceholders(lang);
+            
+            // Save language preference
+            localStorage.setItem('preferredLanguage', lang);
+        }
+
+        function updatePlaceholders(lang) {
+            const placeholderMappings = {
+                'new-condition-name': lang === 'en' ? 'e.g., Type 2 Diabetes' : 
+                                     lang === 'es' ? 'ej., Diabetes Tipo 2' : 
+                                     'مثال، السكري النوع 2',
+                'new-task-name': lang === 'en' ? 'e.g., Blood pressure check' : 
+                                lang === 'es' ? 'ej., Chequeo de presión arterial' : 
+                                'مثال، فحص ضغط الدم',
+                'new-task-detail': lang === 'en' ? 'e.g., Record morning reading' : 
+                                  lang === 'es' ? 'ej., Registrar lectura matutina' : 
+                                  'مثال، تسجيل قراءة الصباح',
+                'new-med-name': lang === 'en' ? 'e.g., Aspirin' : 
+                               lang === 'es' ? 'ej., Aspirina' : 
+                               'مثال، الأسبرين',
+                'new-med-dosage': lang === 'en' ? 'e.g., 100mg' : 
+                                 lang === 'es' ? 'ej., 100mg' : 
+                                 'مثال، 100 ملغ',
+                'new-med-time': lang === 'en' ? 'e.g., 8:00 AM, 8:00 PM' : 
+                               lang === 'es' ? 'ej., 8:00 AM, 8:00 PM' : 
+                               'مثال، 8:00 ص، 8:00 م',
+                'new-med-instructions': lang === 'en' ? 'Special instructions (e.g., take with food)...' : 
+                                       lang === 'es' ? 'Instrucciones especiales (ej., tomar con comida)...' : 
+                                       'تعليمات خاصة (مثل، تناول مع الطعام)...'
+            };
+            
+            Object.keys(placeholderMappings).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.placeholder = placeholderMappings[id];
+                }
+            });
+        }
+
+        // App State
+        let appData = {
+            profile: {
+                name: 'John Doe',
+                email: 'john.doe@email.com',
+                phone: '+1 (555) 123-4567',
+                dob: '1980-05-15',
+                emergency: 'Jane Doe - +1 (555) 987-6543',
+                bloodType: 'O+',
+                allergies: 'Penicillin, Shellfish',
+                insurance: 'Blue Cross Blue Shield'
+            },
+            conditions: [
+                {
+                    id: 1,
+                    name: 'Type 2 Diabetes',
+                    icon: '🩺',
+                    status: 'monitor',
+                    lastReading: '2 hours ago',
+                    readings: { primary: '142', secondary: '7.2%', primaryLabel: 'Blood Sugar (mg/dL)', secondaryLabel: 'HbA1c' }
+                },
+                {
+                    id: 2,
+                    name: 'Hypertension',
+                    icon: '❤️',
+                    status: 'good',
+                    lastReading: '6 hours ago',
+                    readings: { primary: '128/82', secondary: '72', primaryLabel: 'Blood Pressure', secondaryLabel: 'Heart Rate' }
+                },
+                {
+                    id: 3,
+                    name: 'Rheumatoid Arthritis',
+                    icon: '🦴',
+                    status: 'concern',
+                    lastReading: 'Yesterday',
+                    readings: { primary: '6/10', secondary: '4/10', primaryLabel: 'Pain Level', secondaryLabel: 'Stiffness' }
+                }
+            ],
+            medications: [
+                { id: 1, name: 'Metformin', dosage: '500mg', frequency: 'Twice daily', time: '8:00 AM, 8:00 PM', condition: 'Diabetes' },
+                { id: 2, name: 'Lisinopril', dosage: '10mg', frequency: 'Once daily', time: '6:00 PM', condition: 'Hypertension' },
+                { id: 3, name: 'Ibuprofen', dosage: '200mg', frequency: 'As needed', time: 'With meals', condition: 'Arthritis' }
+            ],
+            doctors: [
+                {
+                    id: 1,
+                    name: 'Dr. Sarah Johnson',
+                    specialty: 'Primary Care Physician',
+                    phone: '+1 (555) 123-4567',
+                    email: 'sarah.johnson@healthclinic.com',
+                    address: '123 Medical Center Dr, Suite 100\nHealthy City, HC 12345'
+                },
+                {
+                    id: 2,
+                    name: 'Dr. Michael Chen',
+                    specialty: 'Endocrinologist',
+                    phone: '+1 (555) 234-5678',
+                    email: 'michael.chen@diabetescenter.com',
+                    address: '456 Diabetes Center Blvd\nHealthy City, HC 12345'
+                },
+                {
+                    id: 3,
+                    name: 'Dr. Emily Rodriguez',
+                    specialty: 'Rheumatologist',
+                    phone: '+1 (555) 345-6789',
+                    email: 'emily.rodriguez@jointcare.com',
+                    address: '789 Joint Care Ave, Floor 3\nHealthy City, HC 12345'
+                }
+            ],
+            tasks: [
+                { id: 1, text: 'Morning medication', detail: 'Metformin 500mg', time: '8:00 AM', completed: false, color: 'green' },
+                { id: 2, text: 'Blood pressure check', detail: 'Record morning reading', time: '9:00 AM', completed: false, color: 'blue' },
+                { id: 3, text: 'Gentle stretching', detail: '15 minutes for joints', time: '10:00 AM', completed: false, color: 'orange' },
+                { id: 4, text: 'Evening medication', detail: 'Lisinopril 10mg', time: '6:00 PM', completed: false, color: 'purple' }
+            ],
+            symptoms: [
+                { id: 1, type: 'joint-stiffness', severity: 6, location: 'Right knee', duration: 'hours', date: new Date().toLocaleDateString(), notes: 'Worse in the morning' },
+                { id: 2, type: 'fatigue', severity: 4, location: '', duration: 'all-day', date: new Date().toLocaleDateString(), notes: 'Feeling tired after lunch' }
+            ],
+            wellness: {
+                mood: 4,
+                energy: 6,
+                lastUpdated: new Date().toLocaleDateString()
+            },
+            nutrition: {
+                waterIntake: 1500,
+                waterGoal: 2000,
+                caloriesConsumed: 1400,
+                caloriesGoal: 2000,
+                meals: [
+                    { id: 1, type: 'breakfast', item: 'Oatmeal with berries', calories: 350, time: '8:00 AM', notes: 'Felt energized' },
+                    { id: 2, type: 'lunch', item: 'Grilled chicken salad', calories: 450, time: '12:30 PM', notes: 'Light and satisfying' }
+                ]
+            },
+            exercise: {
+                activities: [
+                    { id: 1, type: 'walking', duration: 30, intensity: 'moderate', feeling: 4, date: new Date().toLocaleDateString(), notes: 'Morning walk in the park' },
+                    { id: 2, type: 'stretching', duration: 15, intensity: 'light', feeling: 5, date: new Date().toLocaleDateString(), notes: 'Helped with stiffness' }
+                ],
+                goals: {
+                    steps: 7000,
+                    stepsGoal: 10000,
+                    exerciseMinutes: 15,
+                    exerciseGoal: 30,
+                    standHours: 8,
+                    standGoal: 10
+                }
+            },
+            aiInsights: [
+                {
+                    id: 1,
+                    type: 'medication',
+                    priority: 'high',
+                    title: 'Medication Adherence Improving',
+                    message: 'Your medication adherence has improved by 15% this week. Keep up the great work!',
+                    icon: '💊',
+                    color: 'green'
+                },
+                {
+                    id: 2,
+                    type: 'symptom',
+                    priority: 'medium',
+                    title: 'Joint Stiffness Pattern',
+                    message: 'Your joint stiffness tends to be worse in the mornings. Consider gentle stretching before getting up.',
+                    icon: '🦴',
+                    color: 'orange'
+                },
+                {
+                    id: 3,
+                    type: 'wellness',
+                    priority: 'low',
+                    title: 'Mood & Exercise Connection',
+                    message: 'Your mood ratings are 20% higher on days when you exercise. Try to maintain your activity routine.',
+                    icon: '😊',
+                    color: 'blue'
+                }
+            ]
+        };
+
+        // Navigation
+        function navigateToPage(pageName, buttonElement) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageName + '-page').classList.add('active');
+            
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            buttonElement.classList.add('active');
+            
+            // Load page-specific content
+            if (pageName === 'medications') {
+                loadMedications();
+            } else if (pageName === 'dashboard') {
+                loadDashboard();
+            }
+        }
+
+        function showPage(pageName) {
+            navigateToPage(pageName, document.querySelector(`[onclick*="${pageName}"]`));
+        }
+
+        function showDashboard() {
+            showPage('dashboard');
+        }
+
+        function showProfile() {
+            showPage('profile');
+            loadProfile();
+        }
+
+        function showDoctorsPage() {
+            showPage('doctors');
+            loadDoctors();
+        }
+
+        // Dashboard Functions
+        function loadDashboard() {
+            loadConditions();
+            loadTasks();
+            updateStats();
+        }
+
+        function loadConditions() {
+            const container = document.getElementById('conditions-container');
+            container.innerHTML = '';
+            
+            appData.conditions.forEach(condition => {
+                const statusColors = {
+                    good: 'bg-green-100 text-green-800',
+                    monitor: 'bg-yellow-100 text-yellow-800',
+                    concern: 'bg-red-100 text-red-800'
+                };
+                
+                const readingColors = {
+                    good: 'bg-green-50 text-green-600',
+                    monitor: 'bg-blue-50 text-blue-600',
+                    concern: 'bg-orange-50 text-orange-600'
+                };
+                
+                container.innerHTML += `
+                    <div class="bg-white rounded-xl p-5 mb-4 card-shadow">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center">
+                                <span class="text-2xl mr-3">${condition.icon}</span>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">${condition.name}</h3>
+                                    <p class="text-sm text-gray-500">Last reading: ${condition.lastReading}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="${statusColors[condition.status]} px-3 py-1 rounded-full text-sm font-medium capitalize">${condition.status}</span>
+                                <button class="text-gray-400 hover:text-gray-600" onclick="editCondition(${condition.id})">✏️</button>
+                                <button class="text-red-400 hover:text-red-600" onclick="deleteCondition(${condition.id})">🗑️</button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="${readingColors[condition.status]} p-3 rounded-lg">
+                                <div class="text-2xl font-bold">${condition.readings.primary}</div>
+                                <div class="text-sm text-gray-600">${condition.readings.primaryLabel}</div>
+                            </div>
+                            <div class="${readingColors[condition.status]} p-3 rounded-lg">
+                                <div class="text-2xl font-bold">${condition.readings.secondary}</div>
+                                <div class="text-sm text-gray-600">${condition.readings.secondaryLabel}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors" onclick="logReading('${condition.name}')">
+                                Log Reading
+                            </button>
+                            <button class="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors" onclick="viewTrends('${condition.name}')">
+                                View Trends
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function loadTasks() {
+            const container = document.getElementById('care-plan-tasks');
+            container.innerHTML = '';
+            
+            appData.tasks.forEach(task => {
+                const colorClass = `bg-${task.color}-50`;
+                const textColorClass = `text-${task.color}-600`;
+                
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-3 ${colorClass} rounded-lg" id="task-${task.id}">
+                        <div class="flex items-center">
+                            <input type="checkbox" class="w-5 h-5 ${textColorClass} rounded mr-3" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                            <div>
+                                <div class="font-medium text-gray-800">${task.text}</div>
+                                <div class="text-sm text-gray-500">${task.detail}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="${textColorClass} text-sm font-medium">${task.time}</span>
+                            <button class="text-red-400 hover:text-red-600 ml-2" onclick="deleteTask(${task.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('condition-count').textContent = appData.conditions.length;
+            const incompleteTasks = appData.tasks.filter(t => !t.completed).length;
+            document.getElementById('due-today-count').textContent = incompleteTasks;
+            const completedTasks = appData.tasks.filter(t => t.completed).length;
+            const totalTasks = appData.tasks.length;
+            const adherenceRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            document.getElementById('adherence-rate').textContent = adherenceRate + '%';
+        }
+
+        // Medications Functions
+        function loadMedications() {
+            const container = document.getElementById('medications-list');
+            container.innerHTML = '';
+            
+            appData.medications.forEach(med => {
+                container.innerHTML += `
+                    <div class="bg-white rounded-xl p-5 card-shadow">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="font-semibold text-gray-800">${med.name}</h3>
+                                <p class="text-sm text-gray-500">${med.dosage} - ${med.frequency}</p>
+                                <p class="text-sm text-blue-600">${med.condition}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="text-gray-400 hover:text-gray-600" onclick="editMedication(${med.id})">✏️</button>
+                                <button class="text-red-400 hover:text-red-600" onclick="deleteMedication(${med.id})">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Next dose: ${med.time}</span>
+                            <button class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors" onclick="markMedicationTaken(${med.id})">
+                                Mark Taken
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Profile Functions
+        function loadProfile() {
+            document.getElementById('profile-name').textContent = appData.profile.name;
+            document.getElementById('profile-email').textContent = appData.profile.email;
+            document.getElementById('edit-name').value = appData.profile.name;
+            document.getElementById('edit-email').value = appData.profile.email;
+            document.getElementById('edit-phone').value = appData.profile.phone;
+            document.getElementById('edit-dob').value = appData.profile.dob;
+            document.getElementById('edit-emergency').value = appData.profile.emergency;
+            document.getElementById('edit-blood-type').value = appData.profile.bloodType;
+            document.getElementById('edit-allergies').value = appData.profile.allergies;
+            document.getElementById('edit-insurance').value = appData.profile.insurance;
+            
+            // Update initials
+            const initials = appData.profile.name.split(' ').map(n => n[0]).join('');
+            document.getElementById('profile-initials').textContent = initials;
+            document.getElementById('profile-pic-initials').textContent = initials;
+        }
+
+        function saveProfile() {
+            appData.profile.name = document.getElementById('edit-name').value;
+            appData.profile.email = document.getElementById('edit-email').value;
+            appData.profile.phone = document.getElementById('edit-phone').value;
+            appData.profile.dob = document.getElementById('edit-dob').value;
+            appData.profile.emergency = document.getElementById('edit-emergency').value;
+            appData.profile.bloodType = document.getElementById('edit-blood-type').value;
+            appData.profile.allergies = document.getElementById('edit-allergies').value;
+            appData.profile.insurance = document.getElementById('edit-insurance').value;
+            
+            loadProfile();
+            showSuccessModal('Profile Updated!', 'Your profile information has been saved successfully.');
+        }
+
+        // Doctors Functions
+        function loadDoctors() {
+            const container = document.getElementById('doctors-list');
+            container.innerHTML = '';
+            
+            appData.doctors.forEach(doctor => {
+                container.innerHTML += `
+                    <div class="bg-white rounded-xl p-5 card-shadow">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                                    <span class="text-xl">👨‍⚕️</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800">${doctor.name}</h3>
+                                    <p class="text-sm text-blue-600">${doctor.specialty}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="text-gray-400 hover:text-gray-600" onclick="editDoctor(${doctor.id})">✏️</button>
+                                <button class="text-red-400 hover:text-red-600" onclick="deleteDoctor(${doctor.id})">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center text-sm text-gray-600">
+                                <span class="mr-2">📞</span>
+                                <a href="tel:${doctor.phone}" class="text-blue-600 hover:underline">${doctor.phone}</a>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-600">
+                                <span class="mr-2">✉️</span>
+                                <a href="mailto:${doctor.email}" class="text-blue-600 hover:underline">${doctor.email}</a>
+                            </div>
+                            <div class="flex items-start text-sm text-gray-600">
+                                <span class="mr-2 mt-0.5">📍</span>
+                                <span>${doctor.address.replace('\n', '<br>')}</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors" onclick="callDoctor('${doctor.phone}')">
+                                Call
+                            </button>
+                            <button class="flex-1 bg-green-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-green-600 transition-colors" onclick="emailDoctor('${doctor.email}')">
+                                Email
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Modal Functions
+        function showSuccessModal(title, message) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            document.getElementById('successModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        function showAddConditionModal() {
+            document.getElementById('addConditionModal').classList.remove('hidden');
+        }
+
+        function closeAddConditionModal() {
+            document.getElementById('addConditionModal').classList.add('hidden');
+            // Reset modal to add mode
+            document.querySelector('#addConditionModal h3').textContent = 'Add New Condition';
+            const addButton = document.querySelector('#addConditionModal button[onclick*="Condition"]');
+            addButton.textContent = 'Add Condition';
+            addButton.setAttribute('onclick', 'addCondition()');
+            // Clear form
+            document.getElementById('new-condition-name').value = '';
+            document.getElementById('new-condition-icon').value = '🩺';
+            document.getElementById('new-condition-status').value = 'good';
+            document.getElementById('new-condition-notes').value = '';
+        }
+
+        function showAddDoctorModal() {
+            document.getElementById('addDoctorModal').classList.remove('hidden');
+        }
+
+        function closeAddDoctorModal() {
+            document.getElementById('addDoctorModal').classList.add('hidden');
+            // Reset modal to add mode
+            document.querySelector('#addDoctorModal h3').textContent = 'Add Doctor';
+            const addButton = document.querySelector('#addDoctorModal button[onclick*="Doctor"]');
+            addButton.textContent = 'Add Doctor';
+            addButton.setAttribute('onclick', 'addDoctor()');
+            // Clear form
+            document.getElementById('new-doctor-name').value = '';
+            document.getElementById('new-doctor-specialty').value = '';
+            document.getElementById('new-doctor-phone').value = '';
+            document.getElementById('new-doctor-email').value = '';
+            document.getElementById('new-doctor-address').value = '';
+        }
+
+        function showReportModal() {
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+
+        function generateReport() {
+            showReportModal();
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+        }
+
+        // Emergency Contact Functions
+
+        function closeEmergencyModal() {
+            document.getElementById('emergencyModal').classList.add('hidden');
+        }
+
+        function callEmergencyServices() {
+            closeEmergencyModal();
+            if (confirm('This will call 911 Emergency Services. Continue?')) {
+                window.location.href = 'tel:911';
+            }
+        }
+
+        function callPrimaryDoctor() {
+            closeEmergencyModal();
+            const primaryDoctor = appData.doctors.find(d => d.specialty.includes('Primary Care'));
+            if (primaryDoctor) {
+                window.location.href = `tel:${primaryDoctor.phone}`;
+            } else {
+                showSuccessModal('Calling Doctor', 'Calling your primary care physician...');
+                window.location.href = 'tel:+15551234567';
+            }
+        }
+
+        function callEmergencyContact() {
+            closeEmergencyModal();
+            const emergencyPhone = appData.profile.emergency.split(' - ')[1];
+            if (emergencyPhone) {
+                window.location.href = `tel:${emergencyPhone}`;
+            } else {
+                showSuccessModal('Emergency Contact', 'Calling your emergency contact...');
+            }
+        }
+
+        // Appointment Functions
+        function showAppointmentModal() {
+            document.getElementById('appointmentModal').classList.remove('hidden');
+            populateAppointmentDoctors();
+            setMinAppointmentDate();
+        }
+
+        function closeAppointmentModal() {
+            document.getElementById('appointmentModal').classList.add('hidden');
+            clearAppointmentForm();
+        }
+
+        function populateAppointmentDoctors() {
+            const select = document.getElementById('appointment-doctor');
+            select.innerHTML = '<option value="">Choose a doctor...</option>';
+            appData.doctors.forEach(doctor => {
+                select.innerHTML += `<option value="${doctor.id}">${doctor.name} - ${doctor.specialty}</option>`;
+            });
+        }
+
+        function setMinAppointmentDate() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('appointment-date').min = tomorrow.toISOString().split('T')[0];
+        }
+
+        function clearAppointmentForm() {
+            document.getElementById('appointment-doctor').value = '';
+            document.getElementById('appointment-type').value = 'routine';
+            document.getElementById('appointment-date').value = '';
+            document.getElementById('appointment-time').value = '09:00';
+            document.getElementById('appointment-reason').value = '';
+        }
+
+        function scheduleAppointmentSubmit() {
+            const doctorId = document.getElementById('appointment-doctor').value;
+            const type = document.getElementById('appointment-type').value;
+            const date = document.getElementById('appointment-date').value;
+            const time = document.getElementById('appointment-time').value;
+            const reason = document.getElementById('appointment-reason').value;
+
+            if (!doctorId || !date || !reason) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            const doctor = appData.doctors.find(d => d.id == doctorId);
+            const appointmentData = {
+                id: Date.now(),
+                doctor: doctor.name,
+                type: type,
+                date: date,
+                time: time,
+                reason: reason,
+                status: 'scheduled'
+            };
+
+            // Add to appointments (you could extend appData to include appointments)
+            if (!appData.appointments) {
+                appData.appointments = [];
+            }
+            appData.appointments.push(appointmentData);
+
+            closeAppointmentModal();
+            showSuccessModal('Appointment Scheduled!', `Your ${type} appointment with ${doctor.name} has been scheduled for ${date} at ${time}.`);
+        }
+
+        // Medication Functions
+        function showAddMedicationModal() {
+            document.getElementById('addMedicationModal').classList.remove('hidden');
+            populateMedicationConditions();
+        }
+
+        function closeAddMedicationModal() {
+            document.getElementById('addMedicationModal').classList.add('hidden');
+            // Reset modal to add mode
+            document.querySelector('#addMedicationModal h3').textContent = 'Add New Medication';
+            const addButton = document.querySelector('#addMedicationModal button[onclick*="Medication"]');
+            addButton.textContent = 'Add Medication';
+            addButton.setAttribute('onclick', 'addMedication()');
+            clearMedicationForm();
+        }
+
+        function populateMedicationConditions() {
+            const select = document.getElementById('new-med-condition');
+            select.innerHTML = '<option value="">Select condition...</option>';
+            appData.conditions.forEach(condition => {
+                select.innerHTML += `<option value="${condition.name}">${condition.name}</option>`;
+            });
+        }
+
+        function clearMedicationForm() {
+            document.getElementById('new-med-name').value = '';
+            document.getElementById('new-med-dosage').value = '';
+            document.getElementById('new-med-frequency').value = 'Once daily';
+            document.getElementById('new-med-time').value = '';
+            document.getElementById('new-med-condition').value = '';
+            document.getElementById('new-med-instructions').value = '';
+        }
+
+        function addMedication() {
+            const name = document.getElementById('new-med-name').value;
+            const dosage = document.getElementById('new-med-dosage').value;
+            const frequency = document.getElementById('new-med-frequency').value;
+            const time = document.getElementById('new-med-time').value;
+            const condition = document.getElementById('new-med-condition').value;
+            const instructions = document.getElementById('new-med-instructions').value;
+
+            if (!name || !dosage || !time) {
+                alert('Please fill in medication name, dosage, and time');
+                return;
+            }
+
+            const newMedication = {
+                id: Date.now(),
+                name: name,
+                dosage: dosage,
+                frequency: frequency,
+                time: time,
+                condition: condition || 'General',
+                instructions: instructions
+            };
+
+            appData.medications.push(newMedication);
+            updateCarePlanFromMedications();
+            loadMedications();
+            loadTasks();
+            closeAddMedicationModal();
+            showSuccessModal('Medication Added!', `${name} has been added to your medication list.`);
+        }
+
+        function editMedication(id) {
+            const medication = appData.medications.find(m => m.id === id);
+            if (medication) {
+                document.getElementById('new-med-name').value = medication.name;
+                document.getElementById('new-med-dosage').value = medication.dosage;
+                document.getElementById('new-med-frequency').value = medication.frequency;
+                document.getElementById('new-med-time').value = medication.time;
+                document.getElementById('new-med-condition').value = medication.condition;
+                document.getElementById('new-med-instructions').value = medication.instructions || '';
+                
+                // Change the modal title and button
+                document.querySelector('#addMedicationModal h3').textContent = 'Edit Medication';
+                const addButton = document.querySelector('#addMedicationModal button[onclick="addMedication()"]');
+                addButton.textContent = 'Update Medication';
+                addButton.setAttribute('onclick', `updateMedication(${id})`);
+                
+                showAddMedicationModal();
+            }
+        }
+
+        function updateMedication(id) {
+            const name = document.getElementById('new-med-name').value;
+            const dosage = document.getElementById('new-med-dosage').value;
+            const frequency = document.getElementById('new-med-frequency').value;
+            const time = document.getElementById('new-med-time').value;
+            const condition = document.getElementById('new-med-condition').value;
+            const instructions = document.getElementById('new-med-instructions').value;
+
+            if (!name || !dosage || !time) {
+                alert('Please fill in medication name, dosage, and time');
+                return;
+            }
+
+            const medicationIndex = appData.medications.findIndex(m => m.id === id);
+            if (medicationIndex !== -1) {
+                appData.medications[medicationIndex].name = name;
+                appData.medications[medicationIndex].dosage = dosage;
+                appData.medications[medicationIndex].frequency = frequency;
+                appData.medications[medicationIndex].time = time;
+                appData.medications[medicationIndex].condition = condition || 'General';
+                appData.medications[medicationIndex].instructions = instructions;
+
+                updateCarePlanFromMedications();
+                loadMedications();
+                loadTasks();
+                closeAddMedicationModal();
+                showSuccessModal('Medication Updated!', `${name} has been updated successfully.`);
+            }
+        }
+
+        function deleteMedication(id) {
+            if (confirm('Are you sure you want to remove this medication?')) {
+                appData.medications = appData.medications.filter(m => m.id !== id);
+                updateCarePlanFromMedications();
+                loadMedications();
+                loadTasks();
+                showSuccessModal('Medication Removed', 'The medication has been removed from your list.');
+            }
+        }
+
+        // CRUD Functions
+        function addCondition() {
+            const name = document.getElementById('new-condition-name').value;
+            const icon = document.getElementById('new-condition-icon').value;
+            const status = document.getElementById('new-condition-status').value;
+            const notes = document.getElementById('new-condition-notes').value;
+            
+            if (!name) {
+                alert('Please enter a condition name');
+                return;
+            }
+            
+            const newCondition = {
+                id: Date.now(),
+                name: name,
+                icon: icon,
+                status: status,
+                lastReading: 'Never',
+                readings: { primary: '--', secondary: '--', primaryLabel: 'No data', secondaryLabel: 'No data' }
+            };
+            
+            appData.conditions.push(newCondition);
+            loadConditions();
+            updateStats();
+            closeAddConditionModal();
+            showSuccessModal('Condition Added!', `${name} has been added to your conditions.`);
+        }
+
+        function editCondition(id) {
+            const condition = appData.conditions.find(c => c.id === id);
+            if (condition) {
+                document.getElementById('new-condition-name').value = condition.name;
+                document.getElementById('new-condition-icon').value = condition.icon;
+                document.getElementById('new-condition-status').value = condition.status;
+                document.getElementById('new-condition-notes').value = condition.notes || '';
+                
+                // Change the modal title and button
+                document.querySelector('#addConditionModal h3').textContent = 'Edit Condition';
+                const addButton = document.querySelector('#addConditionModal button[onclick="addCondition()"]');
+                addButton.textContent = 'Update Condition';
+                addButton.setAttribute('onclick', `updateCondition(${id})`);
+                
+                showAddConditionModal();
+            }
+        }
+
+        function updateCondition(id) {
+            const name = document.getElementById('new-condition-name').value;
+            const icon = document.getElementById('new-condition-icon').value;
+            const status = document.getElementById('new-condition-status').value;
+            const notes = document.getElementById('new-condition-notes').value;
+            
+            if (!name) {
+                alert('Please enter a condition name');
+                return;
+            }
+            
+            const conditionIndex = appData.conditions.findIndex(c => c.id === id);
+            if (conditionIndex !== -1) {
+                appData.conditions[conditionIndex].name = name;
+                appData.conditions[conditionIndex].icon = icon;
+                appData.conditions[conditionIndex].status = status;
+                appData.conditions[conditionIndex].notes = notes;
+                
+                loadConditions();
+                updateStats();
+                closeAddConditionModal();
+                showSuccessModal('Condition Updated!', `${name} has been updated successfully.`);
+            }
+        }
+
+        function deleteCondition(id) {
+            if (confirm('Are you sure you want to delete this condition?')) {
+                appData.conditions = appData.conditions.filter(c => c.id !== id);
+                loadConditions();
+                updateStats();
+                showSuccessModal('Condition Deleted', 'The condition has been removed from your list.');
+            }
+        }
+
+        function addDoctor() {
+            const name = document.getElementById('new-doctor-name').value;
+            const specialty = document.getElementById('new-doctor-specialty').value;
+            const phone = document.getElementById('new-doctor-phone').value;
+            const email = document.getElementById('new-doctor-email').value;
+            const address = document.getElementById('new-doctor-address').value;
+            
+            if (!name || !specialty) {
+                alert('Please enter doctor name and specialty');
+                return;
+            }
+            
+            const newDoctor = {
+                id: Date.now(),
+                name: name,
+                specialty: specialty,
+                phone: phone,
+                email: email,
+                address: address
+            };
+            
+            appData.doctors.push(newDoctor);
+            loadDoctors();
+            closeAddDoctorModal();
+            showSuccessModal('Doctor Added!', `${name} has been added to your healthcare team.`);
+        }
+
+        function editDoctor(id) {
+            const doctor = appData.doctors.find(d => d.id === id);
+            if (doctor) {
+                document.getElementById('new-doctor-name').value = doctor.name;
+                document.getElementById('new-doctor-specialty').value = doctor.specialty;
+                document.getElementById('new-doctor-phone').value = doctor.phone;
+                document.getElementById('new-doctor-email').value = doctor.email;
+                document.getElementById('new-doctor-address').value = doctor.address;
+                
+                // Change the modal title and button
+                document.querySelector('#addDoctorModal h3').textContent = 'Edit Doctor';
+                const addButton = document.querySelector('#addDoctorModal button[onclick="addDoctor()"]');
+                addButton.textContent = 'Update Doctor';
+                addButton.setAttribute('onclick', `updateDoctor(${id})`);
+                
+                showAddDoctorModal();
+            }
+        }
+
+        function updateDoctor(id) {
+            const name = document.getElementById('new-doctor-name').value;
+            const specialty = document.getElementById('new-doctor-specialty').value;
+            const phone = document.getElementById('new-doctor-phone').value;
+            const email = document.getElementById('new-doctor-email').value;
+            const address = document.getElementById('new-doctor-address').value;
+            
+            if (!name || !specialty) {
+                alert('Please enter doctor name and specialty');
+                return;
+            }
+            
+            const doctorIndex = appData.doctors.findIndex(d => d.id === id);
+            if (doctorIndex !== -1) {
+                appData.doctors[doctorIndex].name = name;
+                appData.doctors[doctorIndex].specialty = specialty;
+                appData.doctors[doctorIndex].phone = phone;
+                appData.doctors[doctorIndex].email = email;
+                appData.doctors[doctorIndex].address = address;
+                
+                loadDoctors();
+                closeAddDoctorModal();
+                showSuccessModal('Doctor Updated!', `${name} has been updated successfully.`);
+            }
+        }
+
+        function deleteDoctor(id) {
+            if (confirm('Are you sure you want to remove this doctor?')) {
+                appData.doctors = appData.doctors.filter(d => d.id !== id);
+                loadDoctors();
+                showSuccessModal('Doctor Removed', 'The doctor has been removed from your healthcare team.');
+            }
+        }
+
+        function deleteTask(id) {
+            if (confirm('Are you sure you want to delete this task?')) {
+                appData.tasks = appData.tasks.filter(t => t.id !== id);
+                // Refresh display and stats
+                loadTasks();
+                updateStats();
+                showSuccessModal('Task Deleted', 'The task has been removed from your care plan.');
+            }
+        }
+
+        // Care Plan Sync Function
+        function updateCarePlanFromMedications() {
+            // Remove existing medication tasks
+            appData.tasks = appData.tasks.filter(task => !task.isMedicationTask);
+            
+            // Add new medication tasks
+            appData.medications.forEach(med => {
+                const times = med.time.split(',').map(t => t.trim());
+                times.forEach((time, index) => {
+                    const taskId = Date.now() + index;
+                    const newTask = {
+                        id: taskId,
+                        text: `${med.name} medication`,
+                        detail: `${med.dosage} - ${med.condition}`,
+                        time: time,
+                        completed: false,
+                        color: 'green',
+                        isMedicationTask: true
+                    };
+                    appData.tasks.push(newTask);
+                });
+            });
+            
+            // Sort tasks by time
+            appData.tasks.sort((a, b) => {
+                const timeA = convertTimeToMinutes(a.time);
+                const timeB = convertTimeToMinutes(b.time);
+                return timeA - timeB;
+            });
+        }
+
+        function convertTimeToMinutes(timeStr) {
+            if (!timeStr || timeStr === 'As needed' || timeStr === 'With meals') return 1440; // Put at end
+            const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+            if (!match) return 1440;
+            
+            let hours = parseInt(match[1]);
+            const minutes = parseInt(match[2]);
+            const period = match[3];
+            
+            if (period && period.toUpperCase() === 'PM' && hours !== 12) {
+                hours += 12;
+            } else if (period && period.toUpperCase() === 'AM' && hours === 12) {
+                hours = 0;
+            }
+            
+            return hours * 60 + minutes;
+        }
+
+        // Task Functions
+        function toggleTask(taskId) {
+            const task = appData.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                const taskElement = document.getElementById(`task-${taskId}`);
+                
+                if (task.completed) {
+                    taskElement.style.opacity = '0.6';
+                    showSuccessModal('Task Completed!', 'Great job staying on track with your care plan.');
+                } else {
+                    taskElement.style.opacity = '1';
+                }
+                // Update the stats immediately
+                updateStats();
+            }
+        }
+
+        function markMedicationTaken(medId) {
+            showSuccessModal('Medication Taken!', 'Your medication has been logged successfully.');
+            // Hide urgent reminder if it exists
+            const reminder = document.getElementById('urgent-reminders');
+            if (reminder) {
+                reminder.style.display = 'none';
+            }
+        }
+
+        // Report Functions
+        function generateWeeklyReport() {
+            closeReportModal();
+            showSuccessModal('Weekly Report Generated!', 'Your weekly health report is ready. You can download or share it with your doctor.');
+            
+            // Simulate report generation
+            setTimeout(() => {
+                const reportData = generateReportData('weekly');
+                downloadReport(reportData, 'weekly');
+            }, 1000);
+        }
+
+        function generateMonthlyReport() {
+            closeReportModal();
+            showSuccessModal('Monthly Report Generated!', 'Your monthly health report is ready. You can download or share it with your doctor.');
+            
+            // Simulate report generation
+            setTimeout(() => {
+                const reportData = generateReportData('monthly');
+                downloadReport(reportData, 'monthly');
+            }, 1000);
+        }
+
+        function generateReportData(period) {
+            const date = new Date();
+            const reportData = {
+                period: period,
+                generatedDate: date.toLocaleDateString(),
+                patientName: appData.profile.name,
+                conditions: appData.conditions,
+                medications: appData.medications,
+                adherenceRate: '85%',
+                summary: `${period.charAt(0).toUpperCase() + period.slice(1)} health summary for ${appData.profile.name}`
+            };
+            return reportData;
+        }
+
+        function downloadReport(reportData, period) {
+            const reportContent = `
+HEALTH REPORT - ${period.toUpperCase()}
+Generated: ${reportData.generatedDate}
+Patient: ${reportData.patientName}
+
+CURRENT CONDITIONS:
+${reportData.conditions.map(c => `- ${c.name} (Status: ${c.status})`).join('\n')}
+
+MEDICATIONS:
+${reportData.medications.map(m => `- ${m.name} ${m.dosage} - ${m.frequency}`).join('\n')}
+
+ADHERENCE RATE: ${reportData.adherenceRate}
+
+This report was generated by the Chronic Disease Management Dashboard.
+Please share this with your healthcare provider during your next visit.
+            `;
+            
+            const blob = new Blob([reportContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `health-report-${period}-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Task Functions
+        function showAddTaskModal() {
+            document.getElementById('addTaskModal').classList.remove('hidden');
+        }
+
+        function closeAddTaskModal() {
+            document.getElementById('addTaskModal').classList.add('hidden');
+            clearTaskForm();
+        }
+
+        function clearTaskForm() {
+            document.getElementById('new-task-name').value = '';
+            document.getElementById('new-task-detail').value = '';
+            document.getElementById('new-task-time').value = '';
+            document.getElementById('new-task-color').value = 'blue';
+        }
+
+        function addTask() {
+            const name = document.getElementById('new-task-name').value;
+            const detail = document.getElementById('new-task-detail').value;
+            const time = document.getElementById('new-task-time').value;
+            const color = document.getElementById('new-task-color').value;
+
+            if (!name || !detail || !time) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            // Convert 24-hour time to 12-hour format for display
+            const timeFormatted = formatTime(time);
+
+            const newTask = {
+                id: Date.now(),
+                text: name,
+                detail: detail,
+                time: timeFormatted,
+                completed: false,
+                color: color,
+                isMedicationTask: false
+            };
+
+            appData.tasks.push(newTask);
+            
+            // Sort tasks by time
+            appData.tasks.sort((a, b) => {
+                const timeA = convertTimeToMinutes(a.time);
+                const timeB = convertTimeToMinutes(b.time);
+                return timeA - timeB;
+            });
+
+            // Refresh the display
+            loadTasks();
+            updateStats();
+            closeAddTaskModal();
+            showSuccessModal('Task Added!', `${name} has been added to your care plan.`);
+        }
+
+        function formatTime(time24) {
+            const [hours, minutes] = time24.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:${minutes} ${ampm}`;
+        }
+
+        // Utility Functions
+        function logReading(condition) {
+            showSuccessModal('Reading Logged!', `Your ${condition} reading has been recorded.`);
+        }
+
+        function viewTrends(condition) {
+            showPage('trends');
+        }
+
+        function callDoctor(phone) {
+            window.location.href = `tel:${phone}`;
+        }
+
+        function emailDoctor(email) {
+            window.location.href = `mailto:${email}`;
+        }
+
+        function emergencyContact() {
+            showEmergencyContactModal();
+        }
+
+        function showEmergencyContactModal() {
+            document.getElementById('emergencyModal').classList.remove('hidden');
+        }
+
+        function scheduleAppointment() {
+            showAppointmentModal();
+        }
+
+        function toggleSetting(setting) {
+            showSuccessModal('Setting Updated', `${setting.replace('-', ' ')} preference has been updated.`);
+        }
+
+        function toggleDarkMode() {
+            showSuccessModal('Dark Mode', 'Dark mode toggle is not yet implemented in this demo.');
+        }
+
+        function exportData() {
+            showSuccessModal('Data Export', 'Your health data export has been prepared for download.');
+        }
+
+        function showTrendPeriod(period) {
+            // Update button styles
+            const buttons = document.querySelectorAll('#trends-page button[onclick*="showTrendPeriod"]');
+            buttons.forEach(btn => {
+                btn.className = 'bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium';
+            });
+            
+            // Highlight selected button
+            if (event && event.currentTarget) {
+                event.currentTarget.className = 'bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium';
+            }
+            
+            showSuccessModal('Trend Period Changed', `Now showing ${period} trends.`);
+        }
+
+        function showDataSharing() {
+            showSuccessModal('Data Sharing', 'Data sharing settings panel would open here.');
+        }
+
+        function changeProfilePicture() {
+            showSuccessModal('Profile Picture', 'Profile picture upload feature coming soon!');
+        }
+
+        // New Feature Functions
+
+        // AI Insights Functions
+        function loadAIInsights() {
+            const container = document.getElementById('ai-insights');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            appData.aiInsights.forEach(insight => {
+                const priorityColors = {
+                    high: 'border-red-200 bg-red-50',
+                    medium: 'border-orange-200 bg-orange-50',
+                    low: 'border-blue-200 bg-blue-50'
+                };
+                
+                container.innerHTML += `
+                    <div class="p-4 rounded-lg border ${priorityColors[insight.priority]}">
+                        <div class="flex items-start">
+                            <span class="text-2xl mr-3">${insight.icon}</span>
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-800 text-sm">${insight.title}</h4>
+                                <p class="text-gray-600 text-sm mt-1">${insight.message}</p>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600 ml-2" onclick="dismissInsight(${insight.id})">✕</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function dismissInsight(id) {
+            appData.aiInsights = appData.aiInsights.filter(insight => insight.id !== id);
+            loadAIInsights();
+            showSuccessModal('Insight Dismissed', 'The AI insight has been removed from your dashboard.');
+        }
+
+        // Symptom Tracker Functions
+        function showSymptomModal() {
+            document.getElementById('symptomModal').classList.remove('hidden');
+            
+            // Add event listener for custom symptom
+            document.getElementById('symptom-type').addEventListener('change', function() {
+                const customDiv = document.getElementById('custom-symptom-div');
+                if (this.value === 'other') {
+                    customDiv.classList.remove('hidden');
+                } else {
+                    customDiv.classList.add('hidden');
+                }
+            });
+            
+            // Add event listener for severity slider
+            document.getElementById('symptom-severity').addEventListener('input', function() {
+                document.getElementById('severity-display').textContent = this.value + '/10';
+            });
+        }
+
+        function closeSymptomModal() {
+            document.getElementById('symptomModal').classList.add('hidden');
+            clearSymptomForm();
+        }
+
+        function clearSymptomForm() {
+            document.getElementById('symptom-type').value = '';
+            document.getElementById('custom-symptom').value = '';
+            document.getElementById('symptom-severity').value = '5';
+            document.getElementById('severity-display').textContent = '5/10';
+            document.getElementById('symptom-location').value = '';
+            document.getElementById('symptom-duration').value = 'minutes';
+            document.getElementById('symptom-notes').value = '';
+            document.getElementById('custom-symptom-div').classList.add('hidden');
+        }
+
+        function logSymptom() {
+            const type = document.getElementById('symptom-type').value;
+            const customSymptom = document.getElementById('custom-symptom').value;
+            const severity = document.getElementById('symptom-severity').value;
+            const location = document.getElementById('symptom-location').value;
+            const duration = document.getElementById('symptom-duration').value;
+            const notes = document.getElementById('symptom-notes').value;
+
+            if (!type) {
+                alert('Please select a symptom type');
+                return;
+            }
+
+            const symptomName = type === 'other' ? customSymptom : type;
+            if (type === 'other' && !customSymptom) {
+                alert('Please describe your custom symptom');
+                return;
+            }
+
+            const newSymptom = {
+                id: Date.now(),
+                type: symptomName,
+                severity: parseInt(severity),
+                location: location,
+                duration: duration,
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString(),
+                notes: notes
+            };
+
+            appData.symptoms.push(newSymptom);
+            loadRecentSymptoms();
+            closeSymptomModal();
+            showSuccessModal('Symptom Logged!', `Your ${symptomName} symptom has been recorded successfully.`);
+        }
+
+        function loadRecentSymptoms() {
+            const container = document.getElementById('recent-symptoms');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            const recentSymptoms = appData.symptoms.slice(-3).reverse();
+            
+            if (recentSymptoms.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No symptoms logged today. Tap "Log Symptom" to add one.</p>';
+                return;
+            }
+            
+            recentSymptoms.forEach(symptom => {
+                const severityColor = symptom.severity <= 3 ? 'text-green-600' : 
+                                   symptom.severity <= 6 ? 'text-yellow-600' : 'text-red-600';
+                
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <div class="font-medium text-gray-800 capitalize">${symptom.type.replace('-', ' ')}</div>
+                            <div class="text-sm text-gray-500">${symptom.location ? symptom.location + ' • ' : ''}${symptom.duration}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="${severityColor} font-bold">${symptom.severity}/10</div>
+                            <div class="text-xs text-gray-500">${symptom.time}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Wellness Check Functions
+        function setMood(emoji, value) {
+            appData.wellness.mood = value;
+            appData.wellness.lastUpdated = new Date().toLocaleDateString();
+            
+            // Update UI
+            document.querySelectorAll('#mood-selector button').forEach(btn => {
+                btn.style.transform = 'scale(1)';
+                btn.style.backgroundColor = 'transparent';
+            });
+            
+            event.target.style.transform = 'scale(1.2)';
+            event.target.style.backgroundColor = '#f3f4f6';
+            
+            const moodLabels = ['', 'Very Sad', 'Sad', 'Neutral', 'Happy', 'Very Happy'];
+            document.getElementById('mood-status').textContent = moodLabels[value];
+        }
+
+        function setEnergy(value) {
+            appData.wellness.energy = parseInt(value);
+            document.getElementById('energy-status').textContent = value + '/10';
+        }
+
+        function saveWellnessCheck() {
+            appData.wellness.lastUpdated = new Date().toLocaleDateString();
+            showSuccessModal('Wellness Check Saved!', 'Your daily mood and energy levels have been recorded.');
+        }
+
+        // Vital Signs Functions
+        function showVitalSignsModal() {
+            document.getElementById('vitalSignsModal').classList.remove('hidden');
+        }
+
+        function closeVitalSignsModal() {
+            document.getElementById('vitalSignsModal').classList.add('hidden');
+            clearVitalSignsForm();
+        }
+
+        function clearVitalSignsForm() {
+            document.getElementById('systolic-bp').value = '';
+            document.getElementById('diastolic-bp').value = '';
+            document.getElementById('heart-rate').value = '';
+            document.getElementById('blood-sugar').value = '';
+            document.getElementById('weight').value = '';
+            document.getElementById('temperature').value = '';
+            document.getElementById('vital-notes').value = '';
+        }
+
+        function logVitalSigns() {
+            const systolic = document.getElementById('systolic-bp').value;
+            const diastolic = document.getElementById('diastolic-bp').value;
+            const heartRate = document.getElementById('heart-rate').value;
+            const bloodSugar = document.getElementById('blood-sugar').value;
+            const weight = document.getElementById('weight').value;
+            const temperature = document.getElementById('temperature').value;
+            const notes = document.getElementById('vital-notes').value;
+
+            const vitalSigns = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString(),
+                systolic: systolic,
+                diastolic: diastolic,
+                heartRate: heartRate,
+                bloodSugar: bloodSugar,
+                weight: weight,
+                temperature: temperature,
+                notes: notes
+            };
+
+            if (!appData.vitalSigns) {
+                appData.vitalSigns = [];
+            }
+            appData.vitalSigns.push(vitalSigns);
+
+            closeVitalSignsModal();
+            showSuccessModal('Vital Signs Logged!', 'Your vital signs have been recorded successfully.');
+        }
+
+        // Nutrition Functions
+        function showFoodModal() {
+            document.getElementById('foodModal').classList.remove('hidden');
+        }
+
+        function closeFoodModal() {
+            document.getElementById('foodModal').classList.add('hidden');
+            clearFoodForm();
+        }
+
+        function clearFoodForm() {
+            document.getElementById('meal-type').value = 'breakfast';
+            document.getElementById('food-item').value = '';
+            document.getElementById('food-calories').value = '';
+            document.getElementById('food-portion').value = '';
+            document.getElementById('food-notes').value = '';
+        }
+
+        function logFood() {
+            const mealType = document.getElementById('meal-type').value;
+            const foodItem = document.getElementById('food-item').value;
+            const calories = document.getElementById('food-calories').value;
+            const portion = document.getElementById('food-portion').value;
+            const notes = document.getElementById('food-notes').value;
+
+            if (!foodItem || !calories) {
+                alert('Please enter food item and calories');
+                return;
+            }
+
+            const newMeal = {
+                id: Date.now(),
+                type: mealType,
+                item: foodItem,
+                calories: parseInt(calories),
+                portion: portion,
+                time: new Date().toLocaleTimeString(),
+                notes: notes
+            };
+
+            appData.nutrition.meals.push(newMeal);
+            appData.nutrition.caloriesConsumed += parseInt(calories);
+            
+            loadMealLog();
+            closeFoodModal();
+            showSuccessModal('Food Logged!', `${foodItem} has been added to your ${mealType}.`);
+        }
+
+        function loadMealLog() {
+            const container = document.getElementById('meal-log');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            const todaysMeals = appData.nutrition.meals.slice(-5);
+            
+            if (todaysMeals.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No meals logged today. Tap "Log Food" to add one.</p>';
+                return;
+            }
+            
+            todaysMeals.forEach(meal => {
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <div class="font-medium text-gray-800 capitalize">${meal.type}</div>
+                            <div class="text-sm text-gray-600">${meal.item}</div>
+                            <div class="text-xs text-gray-500">${meal.portion ? meal.portion + ' • ' : ''}${meal.time}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-blue-600">${meal.calories} cal</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function addWater(amount) {
+            appData.nutrition.waterIntake += amount;
+            document.getElementById('water-count').textContent = appData.nutrition.waterIntake + 'ml';
+            
+            const percentage = Math.min((appData.nutrition.waterIntake / appData.nutrition.waterGoal) * 100, 100);
+            
+            if (percentage >= 100) {
+                showSuccessModal('Hydration Goal Reached!', 'Congratulations! You\'ve reached your daily water intake goal.');
+            }
+        }
+
+        // Exercise Functions
+        function showExerciseModal() {
+            document.getElementById('exerciseModal').classList.remove('hidden');
+        }
+
+        function closeExerciseModal() {
+            document.getElementById('exerciseModal').classList.add('hidden');
+            clearExerciseForm();
+        }
+
+        function clearExerciseForm() {
+            document.getElementById('exercise-type').value = 'walking';
+            document.getElementById('exercise-duration').value = '';
+            document.getElementById('exercise-intensity').value = 'moderate';
+            document.getElementById('exercise-notes').value = '';
+            document.getElementById('exercise-feeling-status').textContent = 'Tap to rate';
+        }
+
+        function setExerciseFeeling(emoji, value) {
+            document.getElementById('exercise-feeling-status').textContent = `Feeling: ${emoji}`;
+            // Store the feeling value for when we log the exercise
+            window.currentExerciseFeeling = value;
+        }
+
+        function logExercise() {
+            const type = document.getElementById('exercise-type').value;
+            const duration = document.getElementById('exercise-duration').value;
+            const intensity = document.getElementById('exercise-intensity').value;
+            const notes = document.getElementById('exercise-notes').value;
+            const feeling = window.currentExerciseFeeling || 3;
+
+            if (!duration) {
+                alert('Please enter exercise duration');
+                return;
+            }
+
+            const newActivity = {
+                id: Date.now(),
+                type: type,
+                duration: parseInt(duration),
+                intensity: intensity,
+                feeling: feeling,
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString(),
+                notes: notes
+            };
+
+            appData.exercise.activities.push(newActivity);
+            appData.exercise.goals.exerciseMinutes += parseInt(duration);
+            
+            loadExerciseLog();
+            closeExerciseModal();
+            showSuccessModal('Exercise Logged!', `Your ${duration}-minute ${type} session has been recorded.`);
+        }
+
+        function loadExerciseLog() {
+            const container = document.getElementById('exercise-log');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            const recentActivities = appData.exercise.activities.slice(-5).reverse();
+            
+            if (recentActivities.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No activities logged today. Tap "Log Activity" to add one.</p>';
+                return;
+            }
+            
+            recentActivities.forEach(activity => {
+                const intensityColors = {
+                    light: 'text-green-600',
+                    moderate: 'text-yellow-600',
+                    vigorous: 'text-red-600'
+                };
+                
+                const feelingEmojis = ['', '😫', '😓', '😐', '🙂', '😊'];
+                
+                container.innerHTML += `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                            <div class="font-medium text-gray-800 capitalize">${activity.type.replace('-', ' ')}</div>
+                            <div class="text-sm text-gray-500">${activity.duration} min • ${activity.intensity}</div>
+                            <div class="text-xs text-gray-500">${activity.time}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl">${feelingEmojis[activity.feeling]}</div>
+                            <div class="text-xs ${intensityColors[activity.intensity]} font-medium capitalize">${activity.intensity}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function startQuickExercise(type) {
+            const exercises = {
+                walk: { name: 'Walking', duration: 30, intensity: 'moderate' },
+                stretch: { name: 'Stretching', duration: 15, intensity: 'light' },
+                breathing: { name: 'Breathing Exercise', duration: 10, intensity: 'light' },
+                physio: { name: 'Physiotherapy', duration: 20, intensity: 'moderate' }
+            };
+            
+            const exercise = exercises[type];
+            if (exercise) {
+                showSuccessModal(`Starting ${exercise.name}`, `Timer set for ${exercise.duration} minutes. Remember to log your session when complete!`);
+            }
+        }
+
+        // Medication Reminder Functions
+        function showMedicationReminder() {
+            document.getElementById('medicationReminderModal').classList.remove('hidden');
+        }
+
+        function closeMedicationReminderModal() {
+            document.getElementById('medicationReminderModal').classList.add('hidden');
+        }
+
+        function setReminderType(type) {
+            const reminderTypes = {
+                push: 'Push Notifications',
+                email: 'Email Reminders',
+                sms: 'SMS Alerts'
+            };
+            
+            closeMedicationReminderModal();
+            showSuccessModal('Reminder Set!', `${reminderTypes[type]} have been enabled for your medications.`);
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved language preference
+            const savedLanguage = localStorage.getItem('preferredLanguage') || 'en';
+            document.getElementById('language-selector').value = savedLanguage;
+            if (savedLanguage !== 'en') {
+                changeLanguage(savedLanguage);
+            }
+            
+            updateCarePlanFromMedications();
+            loadDashboard();
+            loadAIInsights();
+            loadRecentSymptoms();
+            loadMealLog();
+            loadExerciseLog();
+            console.log('Enhanced Chronic Disease Management Dashboard loaded successfully');
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'977f933065f46a24',t:'MTc1NjY3NTI1OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
